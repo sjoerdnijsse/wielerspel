@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Wielerspel.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+906eb617462c8a2ebbfd140271899b790108915f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fec1ec95c06398d40f1dd76d0dd802ede5656596")]
 [assembly: System.Reflection.AssemblyProductAttribute("Wielerspel.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Wielerspel.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
