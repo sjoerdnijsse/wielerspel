@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Wielerspel.Api.DTOs;
 using Wielerspel.Api.Data;
 using Wielerspel.Api.Models;
-using Wielerspel.Api.DTOs;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
@@ -20,6 +20,7 @@ public class AuthController : ControllerBase
     {
         _context = context;
     }
+
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
@@ -52,61 +53,80 @@ public class AuthController : ControllerBase
             user.Email
         });
     }
+
+
     [HttpPost("login")]
-public async Task<IActionResult> Login(LoginRequest request)
-{
-    var user = await _context.Users
-        .FirstOrDefaultAsync(x => x.Email == request.Email);
-
-    if (user == null)
+    public async Task<IActionResult> Login(LoginRequest request)
     {
-        return Unauthorized("Ongeldige gegevens.");
+        var user = await _context.Users
+            .FirstOrDefaultAsync(x => x.Email == request.Email);
+
+        if (user == null)
+        {
+            return Unauthorized("Ongeldige gegevens.");
+        }
+
+        var passwordValid = BCrypt.Net.BCrypt.Verify(
+            request.Password,
+            user.PasswordHash
+        );
+
+        if (!passwordValid)
+        {
+            return Unauthorized("Ongeldige gegevens.");
+        }
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes("WielerspelSuperGeheimeSleutel2026!")
+        );
+
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256
+        );
+
+        var token = new JwtSecurityToken(
+            issuer: "Wielerspel",
+            audience: "Wielerspel",
+            claims: claims,
+            expires: DateTime.Now.AddHours(8),
+            signingCredentials: credentials
+        );
+
+        return Ok(new
+        {
+            token = new JwtSecurityTokenHandler().WriteToken(token)
+        });
     }
 
-    var passwordValid = BCrypt.Net.BCrypt.Verify(
-        request.Password,
-        user.PasswordHash
-    );
 
-    if (!passwordValid)
+    [HttpPut("make-moderator/{email}")]
+    public async Task<IActionResult> MakeModerator(string email)
     {
-        return Unauthorized("Ongeldige gegevens.");
+        var user = await _context.Users
+            .FirstOrDefaultAsync(x => x.Email == email);
+
+        if (user == null)
+        {
+            return NotFound("Gebruiker niet gevonden.");
+        }
+
+        user.Role = "Moderator";
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Gebruiker is moderator geworden",
+            user.Email,
+            user.Role
+        });
     }
-
-    var claims = new[]
-    {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-        new Claim(JwtRegisteredClaimNames.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.Role)
-    };
-
-    var key = new SymmetricSecurityKey(
-        Encoding.UTF8.GetBytes("WielerspelSuperGeheimeSleutel2026!")
-    );
-
-    var credentials = new SigningCredentials(
-        key,
-        SecurityAlgorithms.HmacSha256
-    );
-
-    var token = new JwtSecurityToken(
-        issuer: "Wielerspel",
-        audience: "Wielerspel",
-        claims: claims,
-        expires: DateTime.Now.AddHours(8),
-        signingCredentials: credentials
-    );
-
-    return Ok(new
-    {
-        token = new JwtSecurityTokenHandler().WriteToken(token)
-    });
 }
-}
-
-public record RegisterRequest(
-    string Name,
-    string Email,
-    string Password
-);
-

@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wielerspel.Api.Data;
 using Wielerspel.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Wielerspel.Api.Controllers;
 
 [ApiController]
 [Route("api/cyclists")]
+[Authorize(Roles = "Moderator")]
 public class CyclistsController : ControllerBase
 {
     private readonly WielerspelDbContext _context;
