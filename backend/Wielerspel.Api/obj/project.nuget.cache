@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "tlPa06+m5p8=",
+  "dgSpecHash": "kFszrYAA33w=",
   "success": true,
   "projectFilePath": "C:\\Users\\hml-728\\OneDrive - HIJN scholengroep\\Documenten\\GitHub\\wielerspel\\backend\\Wielerspel.Api\\Wielerspel.Api.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\hml-728\\.nuget\\packages\\bcrypt.net-next\\4.2.0\\bcrypt.net-next.4.2.0.nupkg.sha512",
     "C:\\Users\\hml-728\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\hml-728\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.10\\microsoft.aspnetcore.openapi.10.0.10.nupkg.sha512",
     "C:\\Users\\hml-728\\.nuget\\packages\\microsoft.build.framework\\18.0.2\\microsoft.build.framework.18.0.2.nupkg.sha512",
