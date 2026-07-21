@@ -1,0 +1,6 @@
+@Wielerspel.Api_HostAddress = http://localhost:5287
+
+GET {{Wielerspel.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
