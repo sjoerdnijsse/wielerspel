@@ -1,4 +1,12 @@
+using Microsoft.EntityFrameworkCore;
+using Wielerspel.Api.Data;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<WielerspelDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    ));
 
 builder.Services.AddControllers();
 
