@@ -5,4 +5,6 @@ public class Team
     public Guid Id { get; set; }
 
     public string Name { get; set; } = "";
+
+    public ICollection<Cyclist> Cyclists { get; set; } = new List<Cyclist>();
 }

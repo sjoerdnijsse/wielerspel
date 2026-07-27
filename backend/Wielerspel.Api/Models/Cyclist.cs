@@ -8,7 +8,11 @@ public class Cyclist
 
     public int Number { get; set; }
 
+    public int Price { get; set; }
+
     public Guid TeamId { get; set; }
 
     public Team? Team { get; set; }
+
+    public ICollection<UserCyclist> UserCyclists { get; set; } = new List<UserCyclist>();
 }
