@@ -1,4 +1,5 @@
 function Home() {
+ 
   return (
     <main
       style={{
@@ -14,16 +15,6 @@ function Home() {
         Kies je favoriete renners, verdien punten tijdens de koers
         en strijd tegen vrienden om het klassement.
       </p>
-
-      <button
-        style={{
-          padding: "12px 24px",
-          marginTop: "20px",
-          cursor: "pointer",
-        }}
-      >
-        Start met spelen
-      </button>
     </main>
   );
 }

@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Team from "./pages/Team";
 import Ranking from "./pages/Ranking";
+import Admin from "./pages/Admin";
 
 import "./App.css";
 
@@ -27,6 +28,8 @@ function App() {
         {page === "team" && <Team />}
 
         {page === "ranking" && <Ranking />}
+
+        {page === "admin" && <Admin />}
       </main>
     </>
   );

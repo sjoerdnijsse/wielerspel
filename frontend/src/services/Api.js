@@ -102,3 +102,136 @@ export async function removeCyclistFromMyTeam(cyclistId) {
 
   return response.json();
 }
+
+
+export async function getTeamsForAdmin() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/teams`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Ploegen ophalen mislukt");
+  }
+
+  return response.json();
+}
+
+export async function createTeam(name) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/teams`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Ploeg toevoegen mislukt");
+  }
+
+  return response.json();
+}
+
+export async function updateTeam(id, name) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/teams/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Ploeg wijzigen mislukt");
+  }
+
+  return response.json();
+}
+
+export async function deleteTeam(id) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/teams/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Ploeg verwijderen mislukt");
+  }
+
+  return response.json();
+}
+
+export async function createCyclist(cyclist) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/cyclists`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(cyclist),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Renner toevoegen mislukt");
+  }
+
+  return response.json();
+}
+
+export async function updateCyclist(id, cyclist) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/cyclists/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(cyclist),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Renner wijzigen mislukt");
+  }
+
+  return response.json();
+}
+
+export async function deleteCyclist(id) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/cyclists/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Renner verwijderen mislukt");
+  }
+
+  return response.json();
+}

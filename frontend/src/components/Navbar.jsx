@@ -1,4 +1,4 @@
-import { isLoggedIn, logout } from "../services/Auth";
+import { isLoggedIn, isModerator, logout } from "../services/Auth";
 
 export default function Navbar({ setPage }) {
   function handleLogout() {
@@ -8,6 +8,7 @@ export default function Navbar({ setPage }) {
   }
 
   const loggedIn = isLoggedIn();
+  const moderator = isModerator();
 
   return (
     <nav
@@ -60,6 +61,12 @@ export default function Navbar({ setPage }) {
             <button onClick={() => setPage("ranking")}>
               Klassement
             </button>
+
+            {moderator && (
+              <button onClick={() => setPage("admin")}>
+                Beheer
+              </button>
+            )}
 
             <button onClick={handleLogout}>
               Uitloggen
