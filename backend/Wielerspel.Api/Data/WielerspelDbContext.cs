@@ -15,4 +15,6 @@ public class WielerspelDbContext : DbContext
     public DbSet<Team> Teams { get; set; }
 
     public DbSet<Cyclist> Cyclists { get; set; }
+
+    public DbSet<UserCyclist> UserCyclists { get; set; }
 }

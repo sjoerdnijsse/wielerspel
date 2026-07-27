@@ -8,7 +8,7 @@ namespace Wielerspel.Api.Controllers;
 
 [ApiController]
 [Route("api/cyclists")]
-[Authorize(Roles = "Moderator")]
+[Authorize]
 public class CyclistsController : ControllerBase
 {
     private readonly WielerspelDbContext _context;
@@ -19,6 +19,7 @@ public class CyclistsController : ControllerBase
     }
 
 
+    // Iedereen die ingelogd is mag renners bekijken
     [HttpGet]
     public async Task<IActionResult> GetCyclists()
     {
@@ -30,7 +31,9 @@ public class CyclistsController : ControllerBase
     }
 
 
+    // Alleen moderators mogen renners toevoegen
     [HttpPost]
+    [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> CreateCyclist(Cyclist cyclist)
     {
         cyclist.Id = Guid.NewGuid();
