@@ -18,19 +18,32 @@ public class CyclistsController : ControllerBase
         _context = context;
     }
 
-    // Iedere ingelogde gebruiker mag renners bekijken
     [HttpGet]
     public async Task<IActionResult> GetCyclists()
     {
         var cyclists = await _context.Cyclists
+            .AsNoTracking()
             .Include(cyclist => cyclist.Team)
             .OrderBy(cyclist => cyclist.Name)
+            .Select(cyclist => new
+            {
+                cyclist.Id,
+                cyclist.Name,
+                cyclist.TeamId,
+
+                Team = cyclist.Team == null
+                    ? null
+                    : new
+                    {
+                        cyclist.Team.Id,
+                        cyclist.Team.Name
+                    }
+            })
             .ToListAsync();
 
         return Ok(cyclists);
     }
 
-    // Alleen moderators mogen renners toevoegen
     [HttpPost]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> CreateCyclist(Cyclist cyclist)
@@ -40,16 +53,6 @@ public class CyclistsController : ControllerBase
         if (string.IsNullOrWhiteSpace(name))
         {
             return BadRequest("Naam van de renner is verplicht.");
-        }
-
-        if (cyclist.Number <= 0)
-        {
-            return BadRequest("Rugnummer moet groter zijn dan 0.");
-        }
-
-        if (cyclist.Price <= 0)
-        {
-            return BadRequest("Prijs moet groter zijn dan 0 miljoen.");
         }
 
         var teamExists = await _context.Teams
@@ -73,8 +76,6 @@ public class CyclistsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             Name = name,
-            Number = cyclist.Number,
-            Price = cyclist.Price,
             TeamId = cyclist.TeamId
         };
 
@@ -82,16 +83,34 @@ public class CyclistsController : ControllerBase
         await _context.SaveChangesAsync();
 
         var createdCyclist = await _context.Cyclists
+            .AsNoTracking()
             .Include(item => item.Team)
-            .FirstAsync(item => item.Id == newCyclist.Id);
+            .Where(item => item.Id == newCyclist.Id)
+            .Select(item => new
+            {
+                item.Id,
+                item.Name,
+                item.TeamId,
+
+                Team = item.Team == null
+                    ? null
+                    : new
+                    {
+                        item.Team.Id,
+                        item.Team.Name
+                    }
+            })
+            .FirstAsync();
 
         return Ok(createdCyclist);
     }
 
-    // Alleen moderators mogen renners wijzigen
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Moderator")]
-    public async Task<IActionResult> UpdateCyclist(Guid id, Cyclist cyclist)
+    public async Task<IActionResult> UpdateCyclist(
+        Guid id,
+        Cyclist cyclist
+    )
     {
         var existingCyclist = await _context.Cyclists
             .FirstOrDefaultAsync(item => item.Id == id);
@@ -106,16 +125,6 @@ public class CyclistsController : ControllerBase
         if (string.IsNullOrWhiteSpace(name))
         {
             return BadRequest("Naam van de renner is verplicht.");
-        }
-
-        if (cyclist.Number <= 0)
-        {
-            return BadRequest("Rugnummer moet groter zijn dan 0.");
-        }
-
-        if (cyclist.Price <= 0)
-        {
-            return BadRequest("Prijs moet groter zijn dan 0 miljoen.");
         }
 
         var teamExists = await _context.Teams
@@ -133,30 +142,45 @@ public class CyclistsController : ControllerBase
 
         if (duplicateExists)
         {
-            return BadRequest("Er bestaat al een renner met deze naam.");
+            return BadRequest(
+                "Er bestaat al een renner met deze naam."
+            );
         }
 
         existingCyclist.Name = name;
-        existingCyclist.Number = cyclist.Number;
-        existingCyclist.Price = cyclist.Price;
         existingCyclist.TeamId = cyclist.TeamId;
 
         await _context.SaveChangesAsync();
 
         var updatedCyclist = await _context.Cyclists
+            .AsNoTracking()
             .Include(item => item.Team)
-            .FirstAsync(item => item.Id == existingCyclist.Id);
+            .Where(item => item.Id == id)
+            .Select(item => new
+            {
+                item.Id,
+                item.Name,
+                item.TeamId,
+
+                Team = item.Team == null
+                    ? null
+                    : new
+                    {
+                        item.Team.Id,
+                        item.Team.Name
+                    }
+            })
+            .FirstAsync();
 
         return Ok(updatedCyclist);
     }
 
-    // Alleen moderators mogen renners verwijderen
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> DeleteCyclist(Guid id)
     {
         var cyclist = await _context.Cyclists
-            .Include(item => item.UserCyclists)
+            .Include(item => item.CompetitionCyclists)
             .FirstOrDefaultAsync(item => item.Id == id);
 
         if (cyclist == null)
@@ -164,10 +188,10 @@ public class CyclistsController : ControllerBase
             return NotFound("Renner niet gevonden.");
         }
 
-        if (cyclist.UserCyclists.Count > 0)
+        if (cyclist.CompetitionCyclists.Count > 0)
         {
             return BadRequest(
-                "Deze renner kan niet worden verwijderd omdat hij in één of meer gebruikersploegen zit."
+                "Deze renner kan niet worden verwijderd omdat hij aan één of meer wedstrijden is gekoppeld."
             );
         }
 
@@ -179,4 +203,4 @@ public class CyclistsController : ControllerBase
             message = "Renner verwijderd"
         });
     }
-}
+}    

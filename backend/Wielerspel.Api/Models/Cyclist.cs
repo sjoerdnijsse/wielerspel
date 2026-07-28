@@ -6,13 +6,10 @@ public class Cyclist
 
     public string Name { get; set; } = "";
 
-    public int Number { get; set; }
-
-    public int Price { get; set; }
-
     public Guid TeamId { get; set; }
 
     public Team? Team { get; set; }
 
-    public ICollection<UserCyclist> UserCyclists { get; set; } = new List<UserCyclist>();
+    public ICollection<CompetitionCyclist> CompetitionCyclists { get; set; }
+        = new List<CompetitionCyclist>();
 }

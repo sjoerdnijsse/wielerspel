@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Wielerspel.Api.Data;
@@ -11,9 +12,11 @@ using Wielerspel.Api.Data;
 namespace Wielerspel.Api.Migrations
 {
     [DbContext(typeof(WielerspelDbContext))]
-    partial class WielerspelDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727203956_AddCompetitions")]
+    partial class AddCompetitions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -67,9 +70,6 @@ namespace Wielerspel.Api.Migrations
                     b.Property<Guid>("CyclistId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Price")
                         .HasColumnType("integer");
 
@@ -83,56 +83,6 @@ namespace Wielerspel.Api.Migrations
                     b.ToTable("CompetitionCyclists");
                 });
 
-            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CompetitionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("TeamLocked")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("TransfersUsed")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("CompetitionId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("CompetitionUsers");
-                });
-
-            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUserCyclist", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CompetitionCyclistId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CompetitionUserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompetitionCyclistId");
-
-                    b.HasIndex("CompetitionUserId", "CompetitionCyclistId")
-                        .IsUnique();
-
-                    b.ToTable("CompetitionUserCyclists");
-                });
-
             modelBuilder.Entity("Wielerspel.Api.Models.Cyclist", b =>
                 {
                     b.Property<Guid>("Id")
@@ -142,6 +92,9 @@ namespace Wielerspel.Api.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -195,6 +148,27 @@ namespace Wielerspel.Api.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Wielerspel.Api.Models.UserCyclist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CyclistId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CyclistId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserCyclists");
+                });
+
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionCyclist", b =>
                 {
                     b.HasOne("Wielerspel.Api.Models.Competition", "Competition")
@@ -214,44 +188,6 @@ namespace Wielerspel.Api.Migrations
                     b.Navigation("Cyclist");
                 });
 
-            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
-                {
-                    b.HasOne("Wielerspel.Api.Models.Competition", "Competition")
-                        .WithMany("CompetitionUsers")
-                        .HasForeignKey("CompetitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Wielerspel.Api.Models.User", "User")
-                        .WithMany("CompetitionUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Competition");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUserCyclist", b =>
-                {
-                    b.HasOne("Wielerspel.Api.Models.CompetitionCyclist", "CompetitionCyclist")
-                        .WithMany("CompetitionUserCyclists")
-                        .HasForeignKey("CompetitionCyclistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Wielerspel.Api.Models.CompetitionUser", "CompetitionUser")
-                        .WithMany("Cyclists")
-                        .HasForeignKey("CompetitionUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CompetitionCyclist");
-
-                    b.Navigation("CompetitionUser");
-                });
-
             modelBuilder.Entity("Wielerspel.Api.Models.Cyclist", b =>
                 {
                     b.HasOne("Wielerspel.Api.Models.Team", "Team")
@@ -263,36 +199,40 @@ namespace Wielerspel.Api.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("Wielerspel.Api.Models.UserCyclist", b =>
+                {
+                    b.HasOne("Wielerspel.Api.Models.Cyclist", "Cyclist")
+                        .WithMany("UserCyclists")
+                        .HasForeignKey("CyclistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Wielerspel.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cyclist");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Wielerspel.Api.Models.Competition", b =>
                 {
                     b.Navigation("CompetitionCyclists");
-
-                    b.Navigation("CompetitionUsers");
-                });
-
-            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionCyclist", b =>
-                {
-                    b.Navigation("CompetitionUserCyclists");
-                });
-
-            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
-                {
-                    b.Navigation("Cyclists");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.Cyclist", b =>
                 {
                     b.Navigation("CompetitionCyclists");
+
+                    b.Navigation("UserCyclists");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.Team", b =>
                 {
                     b.Navigation("Cyclists");
-                });
-
-            modelBuilder.Entity("Wielerspel.Api.Models.User", b =>
-                {
-                    b.Navigation("CompetitionUsers");
                 });
 #pragma warning restore 612, 618
         }

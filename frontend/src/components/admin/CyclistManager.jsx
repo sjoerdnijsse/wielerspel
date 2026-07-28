@@ -10,8 +10,6 @@ import {
 
 const emptyForm = {
   name: "",
-  number: "",
-  price: "",
   teamId: "",
 };
 
@@ -61,6 +59,7 @@ function CyclistManager() {
   function resetForm() {
     setForm(emptyForm);
     setEditingCyclistId(null);
+    setError("");
   }
 
   function startEditing(cyclist) {
@@ -68,8 +67,6 @@ function CyclistManager() {
 
     setForm({
       name: cyclist.name,
-      number: String(cyclist.number),
-      price: String(cyclist.price),
       teamId: cyclist.teamId,
     });
 
@@ -81,23 +78,11 @@ function CyclistManager() {
 
     const cyclist = {
       name: form.name.trim(),
-      number: Number(form.number),
-      price: Number(form.price),
       teamId: form.teamId,
     };
 
     if (!cyclist.name) {
       setError("Vul de naam van de renner in.");
-      return;
-    }
-
-    if (!Number.isInteger(cyclist.number) || cyclist.number <= 0) {
-      setError("Vul een geldig rugnummer in.");
-      return;
-    }
-
-    if (!Number.isInteger(cyclist.price) || cyclist.price <= 0) {
-      setError("Vul een geldige prijs in hele miljoenen in.");
       return;
     }
 
@@ -160,7 +145,12 @@ function CyclistManager() {
         borderRadius: "8px",
       }}
     >
-      <h3>👤 Renners beheren</h3>
+      <h3>Renners beheren</h3>
+
+      <p>
+        Beheer hier de algemene rennergegevens. Rugnummer en prijs stel je
+        per wedstrijd in bij Prijzen.
+      </p>
 
       {error && (
         <p
@@ -196,27 +186,7 @@ function CyclistManager() {
         </div>
 
         <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="cyclist-number">Rugnummer</label>
-          <br />
-
-          <input
-            id="cyclist-number"
-            name="number"
-            type="number"
-            min="1"
-            value={form.number}
-            onChange={handleChange}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "10px",
-              marginTop: "6px",
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="cyclist-team">Ploeg</label>
+          <label htmlFor="cyclist-team">Professionele ploeg</label>
           <br />
 
           <select
@@ -239,27 +209,6 @@ function CyclistManager() {
               </option>
             ))}
           </select>
-        </div>
-
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="cyclist-price">Prijs in miljoenen</label>
-          <br />
-
-          <input
-            id="cyclist-price"
-            name="price"
-            type="number"
-            min="1"
-            value={form.price}
-            onChange={handleChange}
-            placeholder="Bijvoorbeeld 19"
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "10px",
-              marginTop: "6px",
-            }}
-          />
         </div>
 
         <div
@@ -313,7 +262,7 @@ function CyclistManager() {
               <strong>{cyclist.name}</strong>
 
               <div>
-                #{cyclist.number} · {cyclist.team?.name} · €{cyclist.price}M
+                {cyclist.team?.name ?? "Geen ploeg"}
               </div>
             </div>
 

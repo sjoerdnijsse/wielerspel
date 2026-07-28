@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Wielerspel.Api.Data;
@@ -11,9 +12,11 @@ using Wielerspel.Api.Data;
 namespace Wielerspel.Api.Migrations
 {
     [DbContext(typeof(WielerspelDbContext))]
-    partial class WielerspelDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728154700_ReplaceUserCyclistsWithCompetitionTeams")]
+    partial class ReplaceUserCyclistsWithCompetitionTeams
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,9 +69,6 @@ namespace Wielerspel.Api.Migrations
 
                     b.Property<Guid>("CyclistId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Price")
                         .HasColumnType("integer");
@@ -142,6 +142,9 @@ namespace Wielerspel.Api.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -217,7 +220,7 @@ namespace Wielerspel.Api.Migrations
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
                 {
                     b.HasOne("Wielerspel.Api.Models.Competition", "Competition")
-                        .WithMany("CompetitionUsers")
+                        .WithMany()
                         .HasForeignKey("CompetitionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -266,8 +269,6 @@ namespace Wielerspel.Api.Migrations
             modelBuilder.Entity("Wielerspel.Api.Models.Competition", b =>
                 {
                     b.Navigation("CompetitionCyclists");
-
-                    b.Navigation("CompetitionUsers");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionCyclist", b =>

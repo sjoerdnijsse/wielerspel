@@ -11,4 +11,7 @@ public class User
     public string PasswordHash { get; set; } = "";
 
     public string Role { get; set; } = "Player";
+
+    public ICollection<CompetitionUser> CompetitionUsers { get; set; }
+        = new List<CompetitionUser>();
 }
