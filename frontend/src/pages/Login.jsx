@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { login } from "../services/Api";
 import { saveToken } from "../services/Auth";
 
@@ -6,81 +7,110 @@ function Login({ setPage }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  async function handleLogin(e) {
-    e.preventDefault();
+  async function handleLogin(event) {
+    event.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
-      const data = await login({
-        email,
-        password,
-      });
+      const data = await login({ email, password });
 
-      if (data.token) {
-        saveToken(data.token);
-
-        setEmail("");
-        setPassword("");
-
-        setPage("team");
-      } else {
-        alert("E-mailadres of wachtwoord is onjuist.");
+      if (!data.token) {
+        setError("E-mailadres of wachtwoord is onjuist.");
+        return;
       }
+
+      saveToken(data.token);
+      setEmail("");
+      setPassword("");
+      setPage("team");
     } catch (error) {
       console.error(error);
-      alert("Kan geen verbinding maken met de server.");
+      setError(
+        error.message ||
+          "Inloggen is mislukt. Controleer je gegevens."
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main
-      style={{
-        maxWidth: "400px",
-        margin: "50px auto",
-      }}
-    >
-      <h2>🔐 Inloggen</h2>
+    <main className="page-container" style={{ maxWidth: "480px" }}>
+      <section className="responsive-card">
+        <h2 style={{ marginTop: 0 }}>🔐 Inloggen</h2>
 
-      <form onSubmit={handleLogin}>
-        <div>
-          <label htmlFor="login-email">E-mailadres</label>
-          <br />
+        {error && (
+          <p
+            role="alert"
+            style={{
+              padding: "12px",
+              border: "1px solid #c33",
+              borderRadius: "8px",
+            }}
+          >
+            {error}
+          </p>
+        )}
 
-          <input
-            id="login-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-        </div>
+        <form onSubmit={handleLogin}>
+          <label
+            htmlFor="login-email"
+            style={{ display: "block", marginBottom: "15px" }}
+          >
+            <span style={{ display: "block", marginBottom: "6px" }}>
+              E-mailadres
+            </span>
 
-        <br />
+            <input
+              id="login-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+              disabled={loading}
+              className="responsive-input"
+            />
+          </label>
 
-        <div>
-          <label htmlFor="login-password">Wachtwoord</label>
-          <br />
+          <label
+            htmlFor="login-password"
+            style={{ display: "block", marginBottom: "15px" }}
+          >
+            <span style={{ display: "block", marginBottom: "6px" }}>
+              Wachtwoord
+            </span>
 
-          <input
-            id="login-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </div>
+            <input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+              disabled={loading}
+              className="responsive-input"
+            />
+          </label>
 
-        <br />
+          <div className="responsive-actions">
+            <button type="submit" disabled={loading}>
+              {loading ? "Bezig met inloggen..." : "Inloggen"}
+            </button>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Bezig met inloggen..." : "Inloggen"}
-        </button>
-      </form>
+            <button
+              type="button"
+              onClick={() => setPage("forgotPassword")}
+              disabled={loading}
+            >
+              Wachtwoord vergeten?
+            </button>
+          </div>
+        </form>
+      </section>
     </main>
   );
 }

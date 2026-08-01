@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
-  getCompetitions,
+  getCompetitionsForAdmin,
   createCompetition,
   updateCompetition,
   deleteCompetition,
+  finalizeCompetition,
 } from "../../services/Api";
 
 const emptyForm = {
@@ -18,14 +19,19 @@ const emptyForm = {
 };
 
 function CompetitionManager({ onOpen }) {
-    
   const [competitions, setCompetitions] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [finalizingId, setFinalizingId] = useState(null);
+  const [message, setMessage] = useState("");
+  const [finalizedTopThree, setFinalizedTopThree] =
+    useState([]);
   const [error, setError] = useState("");
+
+  const formSectionRef = useRef(null);
 
   useEffect(() => {
     loadCompetitions();
@@ -36,7 +42,7 @@ function CompetitionManager({ onOpen }) {
     setError("");
 
     try {
-      const data = await getCompetitions();
+      const data = await getCompetitionsForAdmin();
       setCompetitions(data);
     } catch (error) {
       console.error(error);
@@ -77,22 +83,19 @@ function CompetitionManager({ onOpen }) {
     });
 
     setError("");
+
+    window.setTimeout(() => {
+      formSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const competition = {
-      name: form.name.trim(),
-      year: Number(form.year),
-      teamSize: Number(form.teamSize),
-      budget: Number(form.budget),
-      maxTransfers: Number(form.maxTransfers),
-      teamLockDate: new Date(form.teamLockDate).toISOString(),
-      isActive: form.isActive,
-    };
-
-    if (!competition.name) {
+    if (!form.name.trim()) {
       setError("Vul een naam in.");
       return;
     }
@@ -102,12 +105,27 @@ function CompetitionManager({ onOpen }) {
       return;
     }
 
+    const competition = {
+      name: form.name.trim(),
+      year: Number(form.year),
+      teamSize: Number(form.teamSize),
+      budget: Number(form.budget),
+      maxTransfers: Number(form.maxTransfers),
+      teamLockDate: new Date(
+        form.teamLockDate
+      ).toISOString(),
+      isActive: form.isActive,
+    };
+
     setSaving(true);
     setError("");
 
     try {
       if (editingId) {
-        await updateCompetition(editingId, competition);
+        await updateCompetition(
+          editingId,
+          competition
+        );
       } else {
         await createCompetition(competition);
       }
@@ -145,13 +163,51 @@ function CompetitionManager({ onOpen }) {
     }
   }
 
+  async function handleFinalize(competition) {
+    const confirmed = window.confirm(
+      `Weet je zeker dat je "${competition.name} ${competition.year}" definitief wilt afronden?\n\n` +
+        "Hierna kan de wedstrijd niet meer worden gewijzigd."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setFinalizingId(competition.id);
+    setError("");
+    setMessage("");
+    setFinalizedTopThree([]);
+
+    try {
+      const result = await finalizeCompetition(
+        competition.id
+      );
+
+      setMessage(
+        result.message ??
+          "De wedstrijd is definitief afgerond."
+      );
+
+      setFinalizedTopThree(result.topThree ?? []);
+
+      if (editingId === competition.id) {
+        resetForm();
+      }
+
+      await loadCompetitions();
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    } finally {
+      setFinalizingId(null);
+    }
+  }
+
   return (
     <section
+      className="responsive-card"
       style={{
         marginTop: "30px",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
       }}
     >
       <h3>Wedstrijden beheren</h3>
@@ -168,172 +224,291 @@ function CompetitionManager({ onOpen }) {
         </p>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <FormField label="Naam">
-          <input
-            name="name"
-            type="text"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Tour de France"
-          />
-        </FormField>
-
-        <FormField label="Jaar">
-          <input
-            name="year"
-            type="number"
-            value={form.year}
-            onChange={handleChange}
-          />
-        </FormField>
-
-        <FormField label="Ploeggrootte">
-          <input
-            name="teamSize"
-            type="number"
-            min="1"
-            value={form.teamSize}
-            onChange={handleChange}
-          />
-        </FormField>
-
-        <FormField label="Budget in miljoenen">
-          <input
-            name="budget"
-            type="number"
-            min="1"
-            value={form.budget}
-            onChange={handleChange}
-          />
-        </FormField>
-
-        <FormField label="Maximaal aantal wissels">
-          <input
-            name="maxTransfers"
-            type="number"
-            min="0"
-            value={form.maxTransfers}
-            onChange={handleChange}
-          />
-        </FormField>
-
-        <FormField label="Deadline ploeg">
-          <input
-            name="teamLockDate"
-            type="datetime-local"
-            value={form.teamLockDate}
-            onChange={handleChange}
-          />
-        </FormField>
-
-        <label
+      {message && (
+        <p
           style={{
-            display: "block",
-            marginBottom: "15px",
+            padding: "12px",
+            border: "1px solid #2f7d32",
+            borderRadius: "8px",
           }}
         >
-          <input
-            name="isActive"
-            type="checkbox"
-            checked={form.isActive}
-            onChange={handleChange}
-          />
-
-          {" "}Actief
-        </label>
-
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-          }}
-        >
-          <button type="submit" disabled={saving}>
-            {saving
-              ? "Opslaan..."
-              : editingId
-                ? "Wijzigingen opslaan"
-                : "Wedstrijd toevoegen"}
-          </button>
-
-          {editingId && (
-            <button type="button" onClick={resetForm}>
-              Annuleren
-            </button>
-          )}
-        </div>
-      </form>
-
-      <h4 style={{ marginTop: "30px" }}>
-        Bestaande wedstrijden
-      </h4>
-
-      {loading && <p>Wedstrijden laden...</p>}
-
-      {!loading && competitions.length === 0 && (
-        <p>Er zijn nog geen wedstrijden toegevoegd.</p>
+          {message}
+        </p>
       )}
 
-      <ul
-        style={{
-          listStyle: "none",
-          padding: 0,
-        }}
-      >
-        {competitions.map((competition) => (
-          <li
-            key={competition.id}
+      {finalizedTopThree.length > 0 && (
+        <section
+          className="responsive-card"
+          style={{
+            marginBottom: "20px",
+            borderColor: "#d4af37",
+          }}
+        >
+          <h4 style={{ marginTop: 0 }}>
+            Definitieve top 3
+          </h4>
+
+          <ol style={{ marginBottom: 0 }}>
+            {finalizedTopThree.map((standing) => (
+              <li key={standing.userId}>
+                <strong>{standing.userName}</strong>
+                {" — "}
+                {standing.totalPoints} punten
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      <section>
+        <h4>Bestaande wedstrijden</h4>
+
+        {loading && <p>Wedstrijden laden...</p>}
+
+        {!loading && competitions.length === 0 && (
+          <p>
+            Er zijn nog geen wedstrijden toegevoegd.
+          </p>
+        )}
+
+        {!loading && competitions.length > 0 && (
+          <ul
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "12px 0",
-              borderBottom: "1px solid #ddd",
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
             }}
           >
-            <div style={{ flex: 1 }}>
-              <strong>
-                {competition.name} {competition.year}
-              </strong>
+            {competitions.map((competition) => (
+              <li
+                key={competition.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "14px 0",
+                  borderBottom: "1px solid #ddd",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div
+                  style={{
+                    flex: "1 1 300px",
+                  }}
+                >
+                  <strong>
+                    {competition.name}{" "}
+                    {competition.year}
+                  </strong>
 
-              <div>
-                {competition.teamSize} renners ·{" "}
-                {competition.budget}M budget ·{" "}
-                {competition.maxTransfers} wissels
-              </div>
+                  <div>
+                    {competition.teamSize} renners ·{" "}
+                    {competition.budget}M budget ·{" "}
+                    {competition.maxTransfers} wissels
+                  </div>
 
-              <div>
-                Deadline:{" "}
-                {new Date(
-                  competition.teamLockDate
-                ).toLocaleString("nl-NL")}
-              </div>
-            </div>
+                  <div>
+                    Deadline:{" "}
+                    {new Date(
+                      competition.teamLockDate
+                    ).toLocaleString("nl-NL")}
+                  </div>
 
+                  <div>
+                    Status:{" "}
+                    {competition.isFinished
+                      ? "Afgerond"
+                      : competition.isActive
+                        ? "Actief"
+                        : "Niet actief"}
+                  </div>
+                </div>
+
+                <div className="responsive-actions">
+                  <button
+                    type="button"
+                    onClick={() => onOpen(competition)}
+                  >
+                    Openen
+                  </button>
+
+                  {!competition.isFinished && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleFinalize(competition)
+                      }
+                      disabled={
+                        finalizingId === competition.id ||
+                        saving
+                      }
+                    >
+                      {finalizingId === competition.id
+                        ? "Afronden..."
+                        : "Wedstrijd afronden"}
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startEditing(competition)
+                    }
+                    disabled={
+                      competition.isFinished ||
+                      finalizingId === competition.id
+                    }
+                  >
+                    Wijzigen
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDelete(competition)
+                    }
+                    disabled={
+                      competition.isFinished ||
+                      finalizingId === competition.id
+                    }
+                  >
+                    Verwijderen
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section
+        ref={formSectionRef}
+        style={{
+          marginTop: "35px",
+          paddingTop: "25px",
+          borderTop: "1px solid #ccc",
+        }}
+      >
+        <h4>
+          {editingId
+            ? "Wedstrijd wijzigen"
+            : "Nieuwe wedstrijd toevoegen"}
+        </h4>
+
+        {editingId && (
+          <p>
+            Je wijzigt momenteel een bestaande wedstrijd.
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <FormField label="Naam">
+            <input
+              name="name"
+              type="text"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Tour de France"
+              className="responsive-input"
+            />
+          </FormField>
+
+          <FormField label="Jaar">
+            <input
+              name="year"
+              type="number"
+              min="2000"
+              max="2200"
+              value={form.year}
+              onChange={handleChange}
+              className="responsive-input"
+            />
+          </FormField>
+
+          <FormField label="Ploeggrootte">
+            <input
+              name="teamSize"
+              type="number"
+              min="1"
+              value={form.teamSize}
+              onChange={handleChange}
+              className="responsive-input"
+            />
+          </FormField>
+
+          <FormField label="Budget in miljoenen">
+            <input
+              name="budget"
+              type="number"
+              min="1"
+              value={form.budget}
+              onChange={handleChange}
+              className="responsive-input"
+            />
+          </FormField>
+
+          <FormField label="Maximaal aantal wissels">
+            <input
+              name="maxTransfers"
+              type="number"
+              min="0"
+              value={form.maxTransfers}
+              onChange={handleChange}
+              className="responsive-input"
+            />
+          </FormField>
+
+          <FormField label="Deadline ploeg">
+            <input
+              name="teamLockDate"
+              type="datetime-local"
+              value={form.teamLockDate}
+              onChange={handleChange}
+              className="responsive-input"
+            />
+          </FormField>
+
+          <label
+            style={{
+              display: "block",
+              marginBottom: "15px",
+            }}
+          >
+            <input
+              name="isActive"
+              type="checkbox"
+              checked={form.isActive}
+              onChange={handleChange}
+            />
+
+            {" "}
+            Actief
+          </label>
+
+          <div className="responsive-actions">
             <button
-              type="button"
-              onClick={() => onOpen(competition)}
+              type="submit"
+              disabled={saving}
             >
-              Openen
+              {saving
+                ? "Opslaan..."
+                : editingId
+                  ? "Wijzigingen opslaan"
+                  : "Wedstrijd toevoegen"}
             </button>
 
-            <button
-             type="button"
-              onClick={() => startEditing(competition)}
-            >
-              Wijzigen
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDelete(competition)}
-            >
-              Verwijderen
-            </button>
-          </li>
-        ))}
-      </ul>
+            {editingId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={saving}
+              >
+                Annuleren
+              </button>
+            )}
+          </div>
+        </form>
+      </section>
     </section>
   );
 }
@@ -372,9 +547,12 @@ function formatForDateTimeInput(value) {
   }
 
   const date = new Date(value);
-  const timezoneOffset = date.getTimezoneOffset() * 60_000;
+  const timezoneOffset =
+    date.getTimezoneOffset() * 60_000;
 
-  return new Date(date.getTime() - timezoneOffset)
+  return new Date(
+    date.getTime() - timezoneOffset
+  )
     .toISOString()
     .slice(0, 16);
 }

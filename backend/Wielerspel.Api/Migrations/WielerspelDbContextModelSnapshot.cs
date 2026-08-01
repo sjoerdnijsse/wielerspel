@@ -31,7 +31,13 @@ namespace Wielerspel.Api.Migrations
                     b.Property<int>("Budget")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsFinished")
                         .HasColumnType("boolean");
 
                     b.Property<int>("MaxTransfers")
@@ -67,9 +73,6 @@ namespace Wielerspel.Api.Migrations
                     b.Property<Guid>("CyclistId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Price")
                         .HasColumnType("integer");
 
@@ -81,6 +84,40 @@ namespace Wielerspel.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("CompetitionCyclists");
+                });
+
+            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionFinalStanding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompetitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalPoints")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("CompetitionId", "Position")
+                        .IsUnique();
+
+                    b.HasIndex("CompetitionId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("CompetitionFinalStandings");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
@@ -123,12 +160,21 @@ namespace Wielerspel.Api.Migrations
                     b.Property<Guid>("CompetitionUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("JokerStageId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitionCyclistId");
 
+                    b.HasIndex("JokerStageId");
+
                     b.HasIndex("CompetitionUserId", "CompetitionCyclistId")
                         .IsUnique();
+
+                    b.HasIndex("CompetitionUserId", "JokerStageId")
+                        .IsUnique()
+                        .HasFilter("\"JokerStageId\" IS NOT NULL");
 
                     b.ToTable("CompetitionUserCyclists");
                 });
@@ -151,6 +197,92 @@ namespace Wielerspel.Api.Migrations
                     b.HasIndex("TeamId");
 
                     b.ToTable("Cyclists");
+                });
+
+            modelBuilder.Entity("Wielerspel.Api.Models.Stage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompetitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FinishLocation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("GreenJerseyCompetitionCyclistId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PolkaDotJerseyCompetitionCyclistId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ResultsPublished")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("StageNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StartLocation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("YellowJerseyCompetitionCyclistId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GreenJerseyCompetitionCyclistId");
+
+                    b.HasIndex("PolkaDotJerseyCompetitionCyclistId");
+
+                    b.HasIndex("YellowJerseyCompetitionCyclistId");
+
+                    b.HasIndex("CompetitionId", "StageNumber")
+                        .IsUnique();
+
+                    b.ToTable("Stages");
+                });
+
+            modelBuilder.Entity("Wielerspel.Api.Models.StageResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompetitionCyclistId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StageId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitionCyclistId");
+
+                    b.HasIndex("StageId", "CompetitionCyclistId")
+                        .IsUnique();
+
+                    b.HasIndex("StageId", "Position")
+                        .IsUnique();
+
+                    b.ToTable("StageResults");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.Team", b =>
@@ -186,6 +318,12 @@ namespace Wielerspel.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("PasswordResetTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PasswordResetTokenHash")
+                        .HasColumnType("text");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("text");
@@ -212,6 +350,25 @@ namespace Wielerspel.Api.Migrations
                     b.Navigation("Competition");
 
                     b.Navigation("Cyclist");
+                });
+
+            modelBuilder.Entity("Wielerspel.Api.Models.CompetitionFinalStanding", b =>
+                {
+                    b.HasOne("Wielerspel.Api.Models.Competition", "Competition")
+                        .WithMany("FinalStandings")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Wielerspel.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
@@ -247,9 +404,16 @@ namespace Wielerspel.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Wielerspel.Api.Models.Stage", "JokerStage")
+                        .WithMany()
+                        .HasForeignKey("JokerStageId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("CompetitionCyclist");
 
                     b.Navigation("CompetitionUser");
+
+                    b.Navigation("JokerStage");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.Cyclist", b =>
@@ -263,16 +427,70 @@ namespace Wielerspel.Api.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("Wielerspel.Api.Models.Stage", b =>
+                {
+                    b.HasOne("Wielerspel.Api.Models.Competition", "Competition")
+                        .WithMany("Stages")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Wielerspel.Api.Models.CompetitionCyclist", "GreenJerseyCompetitionCyclist")
+                        .WithMany()
+                        .HasForeignKey("GreenJerseyCompetitionCyclistId");
+
+                    b.HasOne("Wielerspel.Api.Models.CompetitionCyclist", "PolkaDotJerseyCompetitionCyclist")
+                        .WithMany()
+                        .HasForeignKey("PolkaDotJerseyCompetitionCyclistId");
+
+                    b.HasOne("Wielerspel.Api.Models.CompetitionCyclist", "YellowJerseyCompetitionCyclist")
+                        .WithMany()
+                        .HasForeignKey("YellowJerseyCompetitionCyclistId");
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("GreenJerseyCompetitionCyclist");
+
+                    b.Navigation("PolkaDotJerseyCompetitionCyclist");
+
+                    b.Navigation("YellowJerseyCompetitionCyclist");
+                });
+
+            modelBuilder.Entity("Wielerspel.Api.Models.StageResult", b =>
+                {
+                    b.HasOne("Wielerspel.Api.Models.CompetitionCyclist", "CompetitionCyclist")
+                        .WithMany("StageResults")
+                        .HasForeignKey("CompetitionCyclistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Wielerspel.Api.Models.Stage", "Stage")
+                        .WithMany("Results")
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CompetitionCyclist");
+
+                    b.Navigation("Stage");
+                });
+
             modelBuilder.Entity("Wielerspel.Api.Models.Competition", b =>
                 {
                     b.Navigation("CompetitionCyclists");
 
                     b.Navigation("CompetitionUsers");
+
+                    b.Navigation("FinalStandings");
+
+                    b.Navigation("Stages");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionCyclist", b =>
                 {
                     b.Navigation("CompetitionUserCyclists");
+
+                    b.Navigation("StageResults");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.CompetitionUser", b =>
@@ -283,6 +501,11 @@ namespace Wielerspel.Api.Migrations
             modelBuilder.Entity("Wielerspel.Api.Models.Cyclist", b =>
                 {
                     b.Navigation("CompetitionCyclists");
+                });
+
+            modelBuilder.Entity("Wielerspel.Api.Models.Stage", b =>
+                {
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("Wielerspel.Api.Models.Team", b =>

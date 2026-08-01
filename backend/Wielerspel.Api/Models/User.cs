@@ -12,6 +12,10 @@ public class User
 
     public string Role { get; set; } = "Player";
 
-    public ICollection<CompetitionUser> CompetitionUsers { get; set; }
-        = new List<CompetitionUser>();
+    public string? PasswordResetTokenHash { get; set; }
+
+    public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
+    public ICollection<CompetitionUser> CompetitionUsers
+        { get; set; } = new List<CompetitionUser>();
 }

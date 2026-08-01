@@ -8,7 +8,11 @@ public class CompetitionUserCyclist
 
     public Guid CompetitionCyclistId { get; set; }
 
+    public Guid? JokerStageId { get; set; }
+
     public CompetitionUser CompetitionUser { get; set; } = null!;
 
     public CompetitionCyclist CompetitionCyclist { get; set; } = null!;
+
+    public Stage? JokerStage { get; set; }
 }

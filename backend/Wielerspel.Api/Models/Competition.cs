@@ -23,4 +23,14 @@ public class Competition
 
     public ICollection<CompetitionUser> CompetitionUsers { get; set; }
         = new List<CompetitionUser>();
+
+    public ICollection<Stage> Stages { get; set; }
+        = new List<Stage>();
+
+    public bool IsFinished { get; set; }
+
+    public DateTime? FinishedAt { get; set; }
+
+    public ICollection<CompetitionFinalStanding> FinalStandings
+        { get; set; } = new List<CompetitionFinalStanding>();
 }

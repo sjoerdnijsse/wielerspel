@@ -182,3 +182,795 @@
     border-right-color: var(--border);
   }
 }
+
+/* Responsive navbar */
+
+.main-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 15px 30px;
+  background-color: #222221;
+  color: white;
+  flex-wrap: wrap;
+}
+
+.main-navbar__title {
+  margin: 0;
+  cursor: pointer;
+  color: white;
+  transition: color 0.2s ease;
+}
+
+.main-navbar__title:hover {
+  color: #f1c40f;
+}
+
+.main-navbar__actions {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.main-navbar__menu-button {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .main-navbar {
+    padding: 12px 16px;
+  }
+
+  .main-navbar__menu-button {
+    display: inline-block;
+  }
+
+  .main-navbar__actions {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .main-navbar__actions--open {
+    display: flex;
+  }
+
+  .main-navbar__actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* Algemene responsive pagina-opmaak */
+
+.page-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+  .page-container {
+    padding: 18px 14px;
+  }
+}
+
+/* Responsive contentblokken */
+
+.responsive-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.responsive-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.responsive-card {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.responsive-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+@media (max-width: 700px) {
+  .responsive-card {
+    padding: 16px;
+  }
+
+  .responsive-actions {
+    flex-direction: column;
+  }
+
+  .responsive-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .responsive-input {
+    font-size: 16px;
+  }
+}
+
+.stage-manager-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .stage-manager-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive Team-pagina */
+
+.team-list,
+.available-cyclists__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.team-list__item,
+.available-cyclists__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+  flex-wrap: wrap;
+}
+
+.team-list__item--selected {
+  padding: 12px;
+  border-radius: 6px;
+  background-color: #f2f2f2;
+}
+
+.team-list__info,
+.available-cyclists__info {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.team-list__joker {
+  flex: 0 1 230px;
+  min-width: 190px;
+}
+
+.team-list__label,
+.available-cyclists__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.team-list__helper {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.team-list__action,
+.available-cyclists__action {
+  flex: 0 0 auto;
+}
+
+.available-cyclists__filters {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(200px, 260px);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .team-list__item,
+  .available-cyclists__item {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px 0;
+  }
+
+  .team-list__item--selected {
+    padding: 16px;
+  }
+
+  .team-list__info,
+  .team-list__joker,
+  .team-list__action,
+  .available-cyclists__info,
+  .available-cyclists__action {
+    width: 100%;
+    min-width: 0;
+    flex-basis: auto;
+  }
+
+  .team-list__action button,
+  .available-cyclists__action button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .available-cyclists__filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+.competition-dashboard-layout{
+display:grid;
+grid-template-columns:220px minmax(0,1fr);
+gap:25px;
+align-items:start;
+}
+
+.competition-dashboard-tabs{
+display:flex;
+flex-direction:column;
+gap:8px;
+margin-top:15px;
+}
+
+.competition-dashboard-tabs button{
+text-align:left;
+padding:10px;
+}
+
+@media (max-width:900px){
+.competition-dashboard-layout{
+grid-template-columns:1fr;
+}
+.competition-dashboard-tabs{
+flex-direction:row;
+overflow-x:auto;
+padding-bottom:6px;
+}
+.competition-dashboard-tabs button{
+white-space:nowrap;
+flex:0 0 auto;
+}
+}
+
+
+
+.cyclist-manager-layout{
+display:grid;
+grid-template-columns:minmax(220px,300px) minmax(0,1fr);
+gap:25px;
+align-items:start;
+}
+
+@media (max-width:900px){
+.cyclist-manager-layout{
+grid-template-columns:1fr;
+}
+}
+
+/* Responsive herontwerp StageResultManager */
+
+.stage-results-manager {
+  min-width: 0;
+}
+
+.stage-results-manager__header {
+  margin-bottom: 24px;
+}
+
+.stage-results-manager__header h2,
+.stage-results-section-heading h3 {
+  margin-top: 0;
+}
+
+.stage-results-message {
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+}
+
+.stage-results-message--error {
+  border: 1px solid #c62828;
+}
+
+.stage-results-message--success {
+  border: 1px solid #2e7d32;
+}
+
+.stage-results-stage-card {
+  margin-bottom: 24px;
+}
+
+.stage-results-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #ddd;
+}
+
+.stage-results-section-heading {
+  margin-bottom: 20px;
+}
+
+.stage-results-section-heading p {
+  margin-bottom: 0;
+}
+
+.stage-results-th,
+.stage-results-td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  vertical-align: middle;
+}
+
+.stage-results-th {
+  border-bottom-width: 2px;
+}
+
+.stage-results-th--right,
+.stage-results-td--right {
+  text-align: right;
+}
+
+.stage-results-mobile-list {
+  display: none;
+}
+
+.stage-result-position-card {
+  padding: 14px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.stage-result-position-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.stage-result-position-card__medal {
+  display: inline-block;
+  min-width: 28px;
+}
+
+.stage-results-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.stage-results-jersey-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.stage-results-jersey-card {
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.stage-results-jersey-card__points {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.stage-results-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+@media (max-width: 700px) {
+  .stage-results-desktop-table {
+    display: none;
+  }
+
+  .stage-results-mobile-list {
+    display: block;
+  }
+
+  .stage-results-jersey-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-results-actions {
+    flex-direction: column;
+  }
+
+  .stage-results-actions button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .stage-results-actions button:last-child {
+    margin-top: 6px;
+  }
+}
+
+.competition-cyclist-layout {
+  display: grid;
+  grid-template-columns: minmax(220px,280px) minmax(0,1fr);
+  gap:24px;
+}
+
+.competition-team-nav {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+@media (max-width:900px){
+
+  .competition-cyclist-layout{
+    grid-template-columns:1fr;
+  }
+
+  .competition-team-nav{
+    flex-direction:row;
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .competition-team-nav button{
+    white-space:nowrap;
+    flex:0 0 auto;
+  }
+}
+
+/* =========================
+   Wielerspel UI polish
+   ========================= */
+
+:root {
+  --color-bg: #f5f7f4;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f0f3ef;
+  --color-text: #1f2a22;
+  --color-text-muted: #667268;
+  --color-border: #d9dfda;
+
+  --color-primary: #1f6f43;
+  --color-primary-hover: #195a37;
+  --color-primary-soft: #e6f2eb;
+
+  --color-danger: #b42318;
+  --color-danger-hover: #8f1c13;
+  --color-danger-soft: #fdecea;
+
+  --color-warning: #a15c00;
+  --color-warning-soft: #fff4dd;
+
+  --color-success: #207447;
+  --color-success-soft: #e8f5ed;
+
+  --color-yellow: #f1c40f;
+  --color-green: #2e8b57;
+  --color-red: #c0392b;
+
+  --shadow-sm: 0 2px 8px rgba(31, 42, 34, 0.06);
+  --shadow-md: 0 8px 24px rgba(31, 42, 34, 0.10);
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--color-text);
+}
+
+p {
+  line-height: 1.6;
+}
+
+a,
+button {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Knoppen */
+
+button {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(31, 111, 67, 0.25);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Eerste actieknop in actieblokken */
+
+.responsive-actions > button:first-child,
+.stage-results-actions > button:first-child {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.responsive-actions > button:first-child:hover:not(:disabled),
+.stage-results-actions > button:first-child:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Kaarten */
+
+.responsive-card {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.responsive-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Invoer */
+
+.responsive-input,
+input,
+select,
+textarea {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.responsive-input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(31, 111, 67, 0.14);
+}
+
+/* Berichten */
+
+[role="alert"] {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.stage-results-message--success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.stage-results-message--error {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+/* Tabellen */
+
+table {
+  background: var(--color-surface);
+}
+
+thead {
+  background: var(--color-surface-muted);
+}
+
+tbody tr:hover {
+  background: #f8faf8;
+}
+
+/* Navbar */
+
+.main-navbar {
+  background:
+    linear-gradient(
+      135deg,
+      #17251d,
+      #1f3a2a
+    );
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.18);
+}
+
+.main-navbar button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: white;
+}
+
+.main-navbar button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Geselecteerde items */
+
+.team-list__item--selected {
+  background: var(--color-primary-soft);
+  border: 1px solid rgba(31, 111, 67, 0.25);
+}
+
+.competition-team-nav__button[aria-pressed="true"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Statusaccenten */
+
+.status-published {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.status-unpublished {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+/* Mobiel */
+
+@media (max-width: 700px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+  }
+
+  .responsive-card {
+    border-radius: 10px;
+  }
+
+  button {
+    min-height: 44px;
+  }
+}
+
+/* Navbar polish */
+
+.main-navbar__title {
+  margin: 0;
+  color: white;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.main-navbar__title:hover {
+  color: #f1c40f;
+}
+
+.main-navbar__link {
+  color: white;
+}
+
+.main-navbar__link--active {
+  background: #f1c40f !important;
+  border-color: #f1c40f !important;
+  color: #17251d !important;
+  box-shadow: 0 2px 8px
+    rgba(241, 196, 15, 0.25);
+}
+
+.main-navbar__link--active:hover:not(:disabled) {
+  background: #d9af08 !important;
+  border-color: #d9af08 !important;
+  color: #17251d !important;
+}
+
+/* Samenvattingskaarten */
+
+.summary-card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-primary);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.summary-card__label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.summary-card__value {
+  display: block;
+  color: var(--color-text);
+  font-size: 1.55rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.summary-card__icon {
+  margin-right: 6px;
+}
+
+@media (max-width: 700px) {
+  .summary-card {
+    padding: 16px;
+  }
+
+  .summary-card__value {
+    font-size: 1.35rem;
+  }
+}

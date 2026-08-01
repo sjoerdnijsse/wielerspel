@@ -1,330 +1,321 @@
-const API_URL = "http://localhost:5287/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  "http://localhost:10000/api";
+
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+function createHeaders({ authenticated = true, hasBody = false } = {}) {
+  const headers = {};
+
+  if (authenticated) {
+    headers.Authorization = `Bearer ${getToken()}`;
+  }
+
+  if (hasBody) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return headers;
+}
+
+async function getErrorMessage(response, fallbackMessage) {
+  const responseText = await response.text();
+
+  if (!responseText) {
+    return fallbackMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(responseText);
+
+    if (typeof parsed === "string") {
+      return parsed;
+    }
+
+    if (parsed.errors) {
+      return Object.entries(parsed.errors)
+        .flatMap(([field, messages]) =>
+          messages.map((message) => `${field}: ${message}`)
+        )
+        .join(" ");
+    }
+
+    return parsed.detail ?? parsed.title ?? parsed.message ?? fallbackMessage;
+  } catch {
+    return responseText;
+  }
+}
+
+
+// Authenticatie
 
 export async function register(user) {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({
+      authenticated: false,
+      hasBody: true,
+    }),
     body: JSON.stringify(user),
   });
 
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Registreren mislukt")
+    );
+  }
+
   return response.json();
 }
-
 
 export async function login(credentials) {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({
+      authenticated: false,
+      hasBody: true,
+    }),
     body: JSON.stringify(credentials),
   });
 
-  return response.json();
-}
-
-
-export async function getCyclists() {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${API_URL}/cyclists`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  return response.json();
-}
-
-
-export async function addCyclistToMyTeam(cyclistId) {
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(
-        `http://localhost:5287/api/myteam/${cyclistId}`,
-        {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Renner toevoegen mislukt");
-    }
-
-    return await response.json();
-}
-
-export async function getMyTeam() {
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(
-        "http://localhost:5287/api/myteam",
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Mijn ploeg ophalen mislukt");
-    }
-
-    return await response.json();
-}
-
-
-export async function removeCyclistFromMyTeam(cyclistId) {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${API_URL}/myteam/${cyclistId}`,
-    {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
   if (!response.ok) {
-    throw new Error("Renner verwijderen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Inloggen mislukt")
+    );
   }
 
   return response.json();
 }
 
 
-export async function getTeamsForAdmin() {
-  const token = localStorage.getItem("token");
+// Algemene professionele ploegen
 
+export async function getTeamsForAdmin() {
   const response = await fetch(`${API_URL}/teams`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error("Ploegen ophalen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Ploegen ophalen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function createTeam(name) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/teams`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({ hasBody: true }),
     body: JSON.stringify({ name }),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Ploeg toevoegen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Ploeg toevoegen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function updateTeam(id, name) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/teams/${id}`, {
     method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({ hasBody: true }),
     body: JSON.stringify({ name }),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Ploeg wijzigen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Ploeg wijzigen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function deleteTeam(id) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/teams/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createHeaders(),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Ploeg verwijderen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Ploeg verwijderen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+
+// Algemene renners
+
+export async function getCyclists() {
+  const response = await fetch(`${API_URL}/cyclists`, {
+    headers: createHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Renners ophalen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function createCyclist(cyclist) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/cyclists`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({ hasBody: true }),
     body: JSON.stringify(cyclist),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Renner toevoegen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Renner toevoegen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function updateCyclist(id, cyclist) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/cyclists/${id}`, {
     method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({ hasBody: true }),
     body: JSON.stringify(cyclist),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Renner wijzigen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Renner wijzigen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function deleteCyclist(id) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/cyclists/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createHeaders(),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Renner verwijderen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Renner verwijderen mislukt")
+    );
   }
 
   return response.json();
 }
 
-export async function getCompetitions() {
-  const token = localStorage.getItem("token");
 
+// Competities
+
+export async function getCompetitions() {
   const response = await fetch(`${API_URL}/competitions`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createHeaders(),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Wedstrijden ophalen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Wedstrijden ophalen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function getCompetitionsForAdmin() {
+  const response = await fetch(`${API_URL}/competitions/admin`, {
+    headers: createHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Wedstrijden voor beheer ophalen mislukt"
+      )
+    );
   }
 
   return response.json();
 }
 
 export async function createCompetition(competition) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/competitions`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({ hasBody: true }),
     body: JSON.stringify(competition),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Wedstrijd toevoegen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Wedstrijd toevoegen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function updateCompetition(id, competition) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/competitions/${id}`, {
     method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders({ hasBody: true }),
     body: JSON.stringify(competition),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Wedstrijd wijzigen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Wedstrijd wijzigen mislukt")
+    );
   }
 
   return response.json();
 }
 
 export async function deleteCompetition(id) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(`${API_URL}/competitions/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: createHeaders(),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Wedstrijd verwijderen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Wedstrijd verwijderen mislukt")
+    );
   }
 
   return response.json();
 }
 
-export async function getCompetitionCyclists(competitionId) {
-  const token = localStorage.getItem("token");
 
+// Renners binnen een competitie
+
+export async function getCompetitionCyclists(competitionId) {
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/cyclists`,
     {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: createHeaders(),
     }
   );
 
   if (!response.ok) {
-    throw new Error("Renners ophalen mislukt");
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Wedstrijdrenners ophalen mislukt"
+      )
+    );
   }
 
   return response.json();
@@ -333,29 +324,27 @@ export async function getCompetitionCyclists(competitionId) {
 export async function addCompetitionCyclist(
   competitionId,
   cyclistId,
-  number,
   price
 ) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/cyclists`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: createHeaders({ hasBody: true }),
       body: JSON.stringify({
         cyclistId,
-        number,
         price,
       }),
     }
   );
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Renner aan wedstrijd toevoegen mislukt"
+      )
+    );
   }
 
   return response.json();
@@ -364,29 +353,27 @@ export async function addCompetitionCyclist(
 export async function updateCompetitionCyclist(
   competitionId,
   cyclistId,
-  number,
   price
 ) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/cyclists/${cyclistId}`,
     {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: createHeaders({ hasBody: true }),
       body: JSON.stringify({
         cyclistId,
-        number,
         price,
       }),
     }
   );
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Wedstrijdrenner wijzigen mislukt"
+      )
+    );
   }
 
   return response.json();
@@ -396,40 +383,41 @@ export async function deleteCompetitionCyclist(
   competitionId,
   cyclistId
 ) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/cyclists/${cyclistId}`,
     {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: createHeaders(),
     }
   );
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Renner uit wedstrijd verwijderen mislukt"
+      )
+    );
   }
 
   return response.json();
 }
 
-export async function getMyCompetitionTeam(competitionId) {
-  const token = localStorage.getItem("token");
 
+// Ploeg van de ingelogde speler
+
+export async function getMyCompetitionTeam(competitionId) {
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/myteam`,
     {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: createHeaders(),
     }
   );
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Mijn ploeg ophalen mislukt");
+    throw new Error(
+      await getErrorMessage(response, "Mijn ploeg ophalen mislukt")
+    );
   }
 
   return response.json();
@@ -439,21 +427,18 @@ export async function addCyclistToCompetitionTeam(
   competitionId,
   competitionCyclistId
 ) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/myteam/${competitionCyclistId}`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: createHeaders(),
     }
   );
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(cleanApiMessage(message));
+    throw new Error(
+      await getErrorMessage(response, "Renner toevoegen mislukt")
+    );
   }
 
   return response.json();
@@ -463,40 +448,459 @@ export async function removeCyclistFromCompetitionTeam(
   competitionId,
   competitionCyclistId
 ) {
-  const token = localStorage.getItem("token");
-
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/myteam/${competitionCyclistId}`,
     {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: createHeaders(),
     }
   );
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(cleanApiMessage(message));
+    throw new Error(
+      await getErrorMessage(response, "Renner verwijderen mislukt")
+    );
   }
 
   return response.json();
 }
 
-function cleanApiMessage(message) {
-  if (!message) {
-    return "Er is iets misgegaan.";
-  }
 
-  try {
-    const parsed = JSON.parse(message);
+// Etappes
 
-    if (typeof parsed === "string") {
-      return parsed;
+export async function getStages(competitionId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages`,
+    {
+      headers: createHeaders(),
     }
+  );
 
-    return parsed.message ?? message;
-  } catch {
-    return message;
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Etappes ophalen mislukt")
+    );
   }
+
+  return response.json();
+}
+
+export async function getStage(competitionId, stageId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Etappe ophalen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function createStage(competitionId, stage) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages`,
+    {
+      method: "POST",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify(stage),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Etappe toevoegen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function updateStage(
+  competitionId,
+  stageId,
+  stage
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}`,
+    {
+      method: "PUT",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify(stage),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Etappe wijzigen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function deleteStage(competitionId, stageId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}`,
+    {
+      method: "DELETE",
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Etappe verwijderen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function getStageResults(competitionId, stageId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}/results`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Uitslagen ophalen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function saveStageResults(
+  competitionId,
+  stageId,
+  results,
+  yellowJerseyCompetitionCyclistId,
+  greenJerseyCompetitionCyclistId,
+  polkaDotJerseyCompetitionCyclistId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}/results`,
+    {
+      method: "PUT",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        results,
+        yellowJerseyCompetitionCyclistId,
+        greenJerseyCompetitionCyclistId,
+        polkaDotJerseyCompetitionCyclistId,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Uitslagen opslaan mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
+ export async function deleteStageResults(
+  competitionId,
+  stageId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}/results`,
+    {
+      method: "DELETE",
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Uitslagen verwijderen mislukt")
+    );
+  }
+
+  return response.json();
+}
+
+export async function getStandings(competitionId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/standings`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Klassement ophalen mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function publishStageResults(
+  competitionId,
+  stageId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}/publish-results`,
+    {
+      method: "PUT",
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Uitslag publiceren mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function unpublishStageResults(
+  competitionId,
+  stageId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/stages/${stageId}/unpublish-results`,
+    {
+      method: "PUT",
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Publicatie intrekken mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function getPlayerStandingDetails(
+  competitionId,
+  userId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/standings/${userId}`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De details van de speler konden niet worden opgehaald."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function transferCompetitionCyclist(
+  competitionId,
+  outgoingCompetitionCyclistId,
+  incomingCompetitionCyclistId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/myteam/transfer`,
+    {
+      method: "POST",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        outgoingCompetitionCyclistId,
+        incomingCompetitionCyclistId,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De transfer kon niet worden uitgevoerd."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function getCompetitionParticipants(
+  competitionId
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/participants`,
+    {
+      method: "GET",
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De deelnemers konden niet worden geladen."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+// Jokers van de ingelogde speler opslaan
+
+export async function saveCompetitionTeamJokers(
+  competitionId,
+  jokers
+) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/myteam/jokers`,
+    {
+      method: "PUT",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        jokers,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De jokers konden niet worden opgeslagen."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function finalizeCompetition(competitionId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/finalize`,
+    {
+      method: "PUT",
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De wedstrijd kon niet worden afgerond."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function getHallOfFame() {
+  const response = await fetch(
+    `${API_URL}/hall-of-fame`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De Hall of Fame kon niet worden geladen."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+// Wachtwoordherstel aanvragen
+
+export async function forgotPassword(email) {
+  const response = await fetch(
+    `${API_URL}/auth/forgot-password`,
+    {
+      method: "POST",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        email,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "De herstelmail kon niet worden aangevraagd."
+      )
+    );
+  }
+
+  return response.json();
+}
+
+// Nieuw wachtwoord opslaan
+
+export async function resetPassword({
+  email,
+  token,
+  newPassword,
+}) {
+  const response = await fetch(
+    `${API_URL}/auth/reset-password`,
+    {
+      method: "POST",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        email,
+        token,
+        newPassword,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Het wachtwoord kon niet worden gewijzigd."
+      )
+    );
+  }
+
+  return response.json();
 }

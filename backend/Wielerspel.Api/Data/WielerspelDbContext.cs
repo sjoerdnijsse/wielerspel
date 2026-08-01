@@ -23,9 +23,22 @@ public class WielerspelDbContext : DbContext
 
     public DbSet<CompetitionUser> CompetitionUsers { get; set; }
 
-    public DbSet<CompetitionUserCyclist> CompetitionUserCyclists { get; set; }
+    public DbSet<CompetitionUserCyclist> CompetitionUserCyclists
+    {
+        get;
+        set;
+    }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<Stage> Stages => Set<Stage>();
+
+    public DbSet<StageResult> StageResults => Set<StageResult>();
+
+    public DbSet<CompetitionFinalStanding> CompetitionFinalStandings
+    => Set<CompetitionFinalStanding>();
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder
+    )
     {
         base.OnModelCreating(modelBuilder);
 
@@ -50,6 +63,68 @@ public class WielerspelDbContext : DbContext
             {
                 x.CompetitionUserId,
                 x.CompetitionCyclistId
+            })
+            .IsUnique();
+
+        // Eén etappe mag binnen dezelfde spelersploeg
+        // maar één keer als joker gebruikt worden.
+        //
+        // De filter zorgt ervoor dat meerdere renners nog
+        // geen joker mogen hebben zolang JokerStageId null is.
+        modelBuilder.Entity<CompetitionUserCyclist>()
+            .HasIndex(x => new
+            {
+                x.CompetitionUserId,
+                x.JokerStageId
+            })
+            .IsUnique()
+            .HasFilter("\"JokerStageId\" IS NOT NULL");
+
+        // De jokeretappe hoort bij de selectieplaats van
+        // een renner. Bij een transfer blijft deze koppeling staan.
+        modelBuilder.Entity<CompetitionUserCyclist>()
+            .HasOne(x => x.JokerStage)
+            .WithMany()
+            .HasForeignKey(x => x.JokerStageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Stage>()
+            .HasIndex(x => new
+            {
+                x.CompetitionId,
+                x.StageNumber
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<StageResult>()
+            .HasIndex(x => new
+            {
+                x.StageId,
+                x.Position
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<StageResult>()
+            .HasIndex(x => new
+            {
+                x.StageId,
+                x.CompetitionCyclistId
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<CompetitionFinalStanding>()
+            .HasIndex(x => new
+            {
+                x.CompetitionId,
+                x.UserId
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<CompetitionFinalStanding>()
+            .HasIndex(x => new
+            {
+                x.CompetitionId,
+                x.Position
             })
             .IsUnique();
     }

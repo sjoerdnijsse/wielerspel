@@ -4,12 +4,11 @@ import CompetitionManager from "../components/admin/CompetitionManager";
 import CompetitionDashboard from "../components/admin/CompetitionDashboard";
 
 function Admin() {
-  
-  const [selectedCompetition, setSelectedCompetition] = useState(null);
+  const [selectedCompetition, setSelectedCompetition] =
+    useState(null);
 
   function openCompetition(competition) {
     console.log("Competitie geopend:", competition);
-
     setSelectedCompetition(competition);
   }
 
@@ -18,22 +17,25 @@ function Admin() {
   }
 
   return (
-    <main
-      style={{
-        padding: "30px",
-        maxWidth: "1200px",
-        margin: "0 auto",
-      }}
-    >
+    <main className="page-container">
       {!selectedCompetition && (
         <>
-          <h2>Beheer</h2>
+          <header
+            style={{
+              marginBottom: "24px",
+            }}
+          >
+            <h2>Beheer</h2>
 
-          <p>
-            Kies een wedstrijdeditie of maak een nieuwe wedstrijd aan.
-          </p>
+            <p>
+              Kies een wedstrijdeditie of maak een nieuwe
+              wedstrijd aan.
+            </p>
+          </header>
 
-          <CompetitionManager onOpen={openCompetition} />
+          <CompetitionManager
+            onOpen={openCompetition}
+          />
         </>
       )}
 
@@ -41,7 +43,9 @@ function Admin() {
         <CompetitionDashboard
           competition={selectedCompetition}
           onBack={closeCompetition}
-          onCompetitionUpdated={setSelectedCompetition}
+          onCompetitionUpdated={
+            setSelectedCompetition
+          }
         />
       )}
     </main>

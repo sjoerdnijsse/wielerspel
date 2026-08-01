@@ -2,8 +2,15 @@ import { useState } from "react";
 
 import TeamManager from "./TeamManager";
 import CyclistManager from "./CyclistManager";
-import { updateCompetition } from "../../services/Api";
-import PriceManager from "./PriceManager";
+import CompetitionCyclistManager from "./CompetitionCyclistManager";
+import StageManager from "./StageManager";
+import StageResultManager from "./StageResultManager";
+import StandingsManager from "./StandingsManager";
+import ParticipantsManager from "./ParticipantsManager";
+
+import {
+  updateCompetition,
+} from "../../services/Api";
 
 function CompetitionDashboard({
   competition,
@@ -26,8 +33,8 @@ function CompetitionDashboard({
       title: "Renners",
     },
     {
-      id: "prices",
-      title: "Prijzen",
+      id: "competitionCyclists",
+      title: "Wedstrijdrenners",
     },
     {
       id: "stages",
@@ -36,6 +43,10 @@ function CompetitionDashboard({
     {
       id: "results",
       title: "Uitslagen",
+    },
+    {
+      id: "standings",
+      title: "Klassement",
     },
     {
       id: "players",
@@ -49,7 +60,9 @@ function CompetitionDashboard({
         return (
           <GeneralTab
             competition={competition}
-            onCompetitionUpdated={onCompetitionUpdated}
+            onCompetitionUpdated={
+              onCompetitionUpdated
+            }
           />
         );
 
@@ -59,30 +72,38 @@ function CompetitionDashboard({
       case "cyclists":
         return <CyclistManager />;
 
-      case "prices":
-        return <PriceManager competition={competition} />;
+      case "competitionCyclists":
+        return (
+          <CompetitionCyclistManager
+            competition={competition}
+          />
+        );
 
       case "stages":
         return (
-          <Placeholder
-            title="Etappes"
-            description="Hier komt het beheer van de etappes."
+          <StageManager
+            competition={competition}
           />
         );
 
       case "results":
         return (
-          <Placeholder
-            title="Uitslagen"
-            description="Hier komt het invoeren van etappe-uitslagen."
+          <StageResultManager
+            competition={competition}
+          />
+        );
+
+      case "standings":
+        return (
+          <StandingsManager
+            competition={competition}
           />
         );
 
       case "players":
         return (
-          <Placeholder
-            title="Deelnemers"
-            description="Hier komt het overzicht van de deelnemers aan deze wedstrijd."
+          <ParticipantsManager
+            competition={competition}
           />
         );
 
@@ -93,7 +114,10 @@ function CompetitionDashboard({
 
   return (
     <section>
-      <button type="button" onClick={onBack}>
+      <button
+        type="button"
+        onClick={onBack}
+      >
         Terug naar wedstrijden
       </button>
 
@@ -108,41 +132,32 @@ function CompetitionDashboard({
         </h2>
 
         <p>
-          Beheer de instellingen en gegevens van deze wedstrijdeditie.
+          Beheer de instellingen en gegevens van deze
+          wedstrijdeditie.
         </p>
       </header>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "220px minmax(0, 1fr)",
-          gap: "25px",
-          alignItems: "start",
-        }}
-      >
+      <div className="competition-dashboard-layout">
         <nav
-          style={{
-            padding: "15px",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-          }}
+          aria-label="Wedstrijdbeheer"
+          className="responsive-card"
         >
           <strong>Onderdelen</strong>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              marginTop: "15px",
-            }}
-          >
+          <div className="competition-dashboard-tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() =>
+                  setActiveTab(tab.id)
+                }
                 disabled={activeTab === tab.id}
+                aria-current={
+                  activeTab === tab.id
+                    ? "page"
+                    : undefined
+                }
                 style={{
                   textAlign: "left",
                   padding: "10px",
@@ -166,7 +181,10 @@ function CompetitionDashboard({
   );
 }
 
-function GeneralTab({ competition, onCompetitionUpdated }) {
+function GeneralTab({
+  competition,
+  onCompetitionUpdated,
+}) {
   const [form, setForm] = useState({
     name: competition.name,
     year: competition.year,
@@ -184,11 +202,19 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
   const [message, setMessage] = useState("");
 
   function handleChange(event) {
-    const { name, value, type, checked } = event.target;
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = event.target;
 
     setForm((current) => ({
       ...current,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
     }));
   }
 
@@ -207,12 +233,59 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
       return;
     }
 
+    const year = Number(form.year);
+    const teamSize = Number(form.teamSize);
+    const budget = Number(form.budget);
+    const maxTransfers =
+      Number(form.maxTransfers);
+
+    if (
+      !Number.isInteger(year) ||
+      year < 2000 ||
+      year > 2200
+    ) {
+      setError("Vul een geldig jaar in.");
+      setMessage("");
+      return;
+    }
+
+    if (
+      !Number.isInteger(teamSize) ||
+      teamSize <= 0
+    ) {
+      setError(
+        "Vul een geldige ploegomvang in."
+      );
+      setMessage("");
+      return;
+    }
+
+    if (
+      !Number.isInteger(budget) ||
+      budget <= 0
+    ) {
+      setError("Vul een geldig budget in.");
+      setMessage("");
+      return;
+    }
+
+    if (
+      !Number.isInteger(maxTransfers) ||
+      maxTransfers < 0
+    ) {
+      setError(
+        "Vul een geldig maximaal aantal wissels in."
+      );
+      setMessage("");
+      return;
+    }
+
     const updatedCompetition = {
       name: form.name.trim(),
-      year: Number(form.year),
-      teamSize: Number(form.teamSize),
-      budget: Number(form.budget),
-      maxTransfers: Number(form.maxTransfers),
+      year,
+      teamSize,
+      budget,
+      maxTransfers,
       teamLockDate: new Date(
         form.teamLockDate
       ).toISOString(),
@@ -240,17 +313,12 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
   }
 
   return (
-    <section
-      style={{
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-      }}
-    >
+    <section className="responsive-card">
       <h3>Algemeen</h3>
 
       {error && (
         <p
+          role="alert"
           style={{
             padding: "12px",
             border: "1px solid #c33",
@@ -280,6 +348,7 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             type="text"
             value={form.name}
             onChange={handleChange}
+            className="responsive-input"
           />
         </FormField>
 
@@ -291,6 +360,7 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             max="2200"
             value={form.year}
             onChange={handleChange}
+            className="responsive-input"
           />
         </FormField>
 
@@ -299,8 +369,10 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             name="teamSize"
             type="number"
             min="1"
+            step="1"
             value={form.teamSize}
             onChange={handleChange}
+            className="responsive-input"
           />
         </FormField>
 
@@ -309,8 +381,10 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             name="budget"
             type="number"
             min="1"
+            step="1"
             value={form.budget}
             onChange={handleChange}
+            className="responsive-input"
           />
         </FormField>
 
@@ -319,8 +393,10 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             name="maxTransfers"
             type="number"
             min="0"
+            step="1"
             value={form.maxTransfers}
             onChange={handleChange}
+            className="responsive-input"
           />
         </FormField>
 
@@ -330,6 +406,7 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             type="datetime-local"
             value={form.teamLockDate}
             onChange={handleChange}
+            className="responsive-input"
           />
         </FormField>
 
@@ -344,36 +421,32 @@ function GeneralTab({ competition, onCompetitionUpdated }) {
             type="checkbox"
             checked={form.isActive}
             onChange={handleChange}
+            className="responsive-input"
           />
 
-          {" "}Actief
+          {" "}
+          Actief
         </label>
 
-        <button type="submit" disabled={saving}>
-          {saving ? "Opslaan..." : "Instellingen opslaan"}
-        </button>
+        <div className="responsive-actions">
+          <button
+            type="submit"
+            disabled={saving}
+          >
+          {saving
+            ? "Opslaan..."
+            : "Instellingen opslaan"}
+          </button>
+        </div>
       </form>
     </section>
   );
 }
 
-function Placeholder({ title, description }) {
-  return (
-    <section
-      style={{
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-      }}
-    >
-      <h3>{title}</h3>
-
-      <p>{description}</p>
-    </section>
-  );
-}
-
-function FormField({ label, children }) {
+function FormField({
+  label,
+  children,
+}) {
   return (
     <label
       style={{
@@ -407,9 +480,12 @@ function formatForDateTimeInput(value) {
   }
 
   const date = new Date(value);
-  const timezoneOffset = date.getTimezoneOffset() * 60_000;
+  const timezoneOffset =
+    date.getTimezoneOffset() * 60_000;
 
-  return new Date(date.getTime() - timezoneOffset)
+  return new Date(
+    date.getTime() - timezoneOffset
+  )
     .toISOString()
     .slice(0, 16);
 }

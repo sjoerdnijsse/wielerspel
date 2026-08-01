@@ -37,7 +37,8 @@ public class CompetitionCyclistsController : ControllerBase
             return NotFound("Wedstrijd niet gevonden.");
         }
 
-        if (!competition.IsActive && !User.IsInRole("Moderator"))
+        if (!competition.IsActive &&
+            !User.IsInRole("Moderator"))
         {
             return NotFound("Wedstrijd niet gevonden.");
         }
@@ -47,14 +48,15 @@ public class CompetitionCyclistsController : ControllerBase
             .Where(x => x.CompetitionId == competitionId)
             .Include(x => x.Cyclist)
                 .ThenInclude(x => x.Team)
-            .OrderBy(x => x.Number)
+            .OrderBy(x => x.Cyclist.Team == null
+                ? string.Empty
+                : x.Cyclist.Team.Name)
             .ThenBy(x => x.Cyclist.Name)
             .Select(x => new
             {
                 x.Id,
                 x.CompetitionId,
                 x.CyclistId,
-                x.Number,
                 x.Price,
 
                 Cyclist = new
@@ -77,7 +79,8 @@ public class CompetitionCyclistsController : ControllerBase
         return Ok(cyclists);
     }
 
-    // Alleen moderators mogen een renner aan een competitie koppelen.
+    // Alleen moderators mogen een renner aan een competitie
+    // koppelen.
     [HttpPost]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> AddCompetitionCyclist(
@@ -101,13 +104,6 @@ public class CompetitionCyclistsController : ControllerBase
             return NotFound("Renner niet gevonden.");
         }
 
-        if (request.Number <= 0)
-        {
-            return BadRequest(
-                "Rugnummer moet groter zijn dan 0."
-            );
-        }
-
         if (request.Price <= 0)
         {
             return BadRequest(
@@ -128,29 +124,18 @@ public class CompetitionCyclistsController : ControllerBase
             );
         }
 
-        var numberAlreadyUsed = await _context.CompetitionCyclists
-            .AnyAsync(x =>
-                x.CompetitionId == competitionId &&
-                x.Number == request.Number
-            );
-
-        if (numberAlreadyUsed)
-        {
-            return BadRequest(
-                "Dit rugnummer is al in gebruik binnen deze wedstrijd."
-            );
-        }
-
         var competitionCyclist = new CompetitionCyclist
         {
             Id = Guid.NewGuid(),
             CompetitionId = competitionId,
             CyclistId = request.CyclistId,
-            Number = request.Number,
             Price = request.Price
         };
 
-        _context.CompetitionCyclists.Add(competitionCyclist);
+        _context.CompetitionCyclists.Add(
+            competitionCyclist
+        );
+
         await _context.SaveChangesAsync();
 
         var createdItem = await _context.CompetitionCyclists
@@ -163,7 +148,6 @@ public class CompetitionCyclistsController : ControllerBase
                 x.Id,
                 x.CompetitionId,
                 x.CyclistId,
-                x.Number,
                 x.Price,
 
                 Cyclist = new
@@ -186,7 +170,8 @@ public class CompetitionCyclistsController : ControllerBase
         return Ok(createdItem);
     }
 
-    // Alleen moderators mogen rugnummer en prijs wijzigen.
+    // Alleen moderators mogen de prijs van een
+    // wedstrijdrenner wijzigen.
     [HttpPut("{cyclistId:guid}")]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> UpdateCompetitionCyclist(
@@ -195,13 +180,6 @@ public class CompetitionCyclistsController : ControllerBase
         CompetitionCyclistRequest request
     )
     {
-        if (request.Number <= 0)
-        {
-            return BadRequest(
-                "Rugnummer moet groter zijn dan 0."
-            );
-        }
-
         if (request.Price <= 0)
         {
             return BadRequest(
@@ -209,11 +187,12 @@ public class CompetitionCyclistsController : ControllerBase
             );
         }
 
-        var competitionCyclist = await _context.CompetitionCyclists
-            .FirstOrDefaultAsync(x =>
-                x.CompetitionId == competitionId &&
-                x.CyclistId == cyclistId
-            );
+        var competitionCyclist =
+            await _context.CompetitionCyclists
+                .FirstOrDefaultAsync(x =>
+                    x.CompetitionId == competitionId &&
+                    x.CyclistId == cyclistId
+                );
 
         if (competitionCyclist == null)
         {
@@ -222,21 +201,6 @@ public class CompetitionCyclistsController : ControllerBase
             );
         }
 
-        var numberAlreadyUsed = await _context.CompetitionCyclists
-            .AnyAsync(x =>
-                x.CompetitionId == competitionId &&
-                x.CyclistId != cyclistId &&
-                x.Number == request.Number
-            );
-
-        if (numberAlreadyUsed)
-        {
-            return BadRequest(
-                "Dit rugnummer is al in gebruik binnen deze wedstrijd."
-            );
-        }
-
-        competitionCyclist.Number = request.Number;
         competitionCyclist.Price = request.Price;
 
         await _context.SaveChangesAsync();
@@ -254,7 +218,6 @@ public class CompetitionCyclistsController : ControllerBase
                 x.Id,
                 x.CompetitionId,
                 x.CyclistId,
-                x.Number,
                 x.Price,
 
                 Cyclist = new
@@ -277,7 +240,8 @@ public class CompetitionCyclistsController : ControllerBase
         return Ok(updatedItem);
     }
 
-    // Alleen moderators mogen een renner uit een competitie verwijderen.
+    // Alleen moderators mogen een renner uit een
+    // competitie verwijderen.
     [HttpDelete("{cyclistId:guid}")]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> RemoveCompetitionCyclist(
@@ -285,11 +249,12 @@ public class CompetitionCyclistsController : ControllerBase
         Guid cyclistId
     )
     {
-        var competitionCyclist = await _context.CompetitionCyclists
-            .FirstOrDefaultAsync(x =>
-                x.CompetitionId == competitionId &&
-                x.CyclistId == cyclistId
-            );
+        var competitionCyclist =
+            await _context.CompetitionCyclists
+                .FirstOrDefaultAsync(x =>
+                    x.CompetitionId == competitionId &&
+                    x.CyclistId == cyclistId
+                );
 
         if (competitionCyclist == null)
         {
@@ -301,7 +266,8 @@ public class CompetitionCyclistsController : ControllerBase
         var isSelectedByPlayer =
             await _context.CompetitionUserCyclists
                 .AnyAsync(x =>
-                    x.CompetitionCyclistId == competitionCyclist.Id
+                    x.CompetitionCyclistId ==
+                    competitionCyclist.Id
                 );
 
         if (isSelectedByPlayer)
@@ -311,7 +277,10 @@ public class CompetitionCyclistsController : ControllerBase
             );
         }
 
-        _context.CompetitionCyclists.Remove(competitionCyclist);
+        _context.CompetitionCyclists.Remove(
+            competitionCyclist
+        );
+
         await _context.SaveChangesAsync();
 
         return Ok(new

@@ -8,8 +8,6 @@ public class CompetitionCyclist
 
     public Guid CyclistId { get; set; }
 
-    public int Number { get; set; }
-
     // Prijs in hele miljoenen
     public int Price { get; set; }
 
@@ -17,6 +15,10 @@ public class CompetitionCyclist
 
     public Cyclist Cyclist { get; set; } = null!;
 
-    public ICollection<CompetitionUserCyclist> CompetitionUserCyclists
-        { get; set; } = new List<CompetitionUserCyclist>();
+    public ICollection<CompetitionUserCyclist>
+        CompetitionUserCyclists { get; set; }
+        = new List<CompetitionUserCyclist>();
+
+    public ICollection<StageResult> StageResults { get; set; }
+        = new List<StageResult>();
 }
