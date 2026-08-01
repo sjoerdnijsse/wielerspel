@@ -19,15 +19,23 @@ builder.WebHost.UseUrls(
 
 // Lokaal gebruiken we de Vite-developmentserver.
 // Op Render vullen we FrontendUrl als environment variable in.
-var frontendUrl =
-    builder.Configuration["FrontendUrl"]
-    ?? "http://localhost:5173";
+var configuredFrontendUrl =
+    builder.Configuration["FrontendUrl"];
 
 var allowedOrigins = new[]
 {
     "http://localhost:5173",
-    frontendUrl.TrimEnd('/')
+    "https://girotourvuelta.nl",
+    "https://www.girotourvuelta.nl",
+    "https://girotourvuelta-frontend.onrender.com",
+    configuredFrontendUrl
 }
+.Where(origin =>
+    !string.IsNullOrWhiteSpace(origin)
+)
+.Select(origin =>
+    origin!.TrimEnd('/')
+)
 .Distinct()
 .ToArray();
 

@@ -1,0 +1,5 @@
+5103; 0 16408 TABLE DATA public Teams postgres
+5104; 0 16417 TABLE DATA public Cyclists postgres
+5105; 0 16456 TABLE DATA public Competitions postgres
+5106; 0 16471 TABLE DATA public CompetitionCyclists postgres
+5109; 0 16536 TABLE DATA public Stages postgres
