@@ -140,6 +140,44 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Pas bij het starten alle nog ontbrekende
+// Entity Framework-migraties toe.
+using (var scope = app.Services.CreateScope())
+{
+    var database =
+        scope.ServiceProvider
+            .GetRequiredService<WielerspelDbContext>();
+
+    await database.Database.MigrateAsync();
+
+    var initialModeratorEmail =
+        builder.Configuration[
+            "InitialModeratorEmail"
+        ]?
+        .Trim()
+        .ToLowerInvariant();
+
+    if (!string.IsNullOrWhiteSpace(
+            initialModeratorEmail
+        ))
+    {
+        var initialModerator =
+            await database.Users
+                .FirstOrDefaultAsync(user =>
+                    user.Email.ToLower() ==
+                    initialModeratorEmail
+                );
+
+        if (initialModerator != null &&
+            initialModerator.Role != "Moderator")
+        {
+            initialModerator.Role = "Moderator";
+
+            await database.SaveChangesAsync();
+        }
+    }
+}
+
 app.UseCors("ReactApp");
 
 if (app.Environment.IsDevelopment())

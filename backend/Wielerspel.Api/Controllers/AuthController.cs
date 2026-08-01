@@ -81,17 +81,30 @@ public class AuthController : ControllerBase
             );
         }
 
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Name = name,
-            Email = email,
-            PasswordHash =
-                BCrypt.Net.BCrypt.HashPassword(
-                    request.Password
-                ),
-            Role = "Player"
-        };
+        var initialModeratorEmail =
+                _configuration["InitialModeratorEmail"]?
+                    .Trim()
+                    .ToLowerInvariant();
+
+            var isInitialModerator =
+                !string.IsNullOrWhiteSpace(
+                    initialModeratorEmail
+                ) &&
+                email == initialModeratorEmail;
+
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Email = email,
+                PasswordHash =
+                    BCrypt.Net.BCrypt.HashPassword(
+                        request.Password
+                    ),
+                Role = isInitialModerator
+                    ? "Moderator"
+                    : "Player"
+            };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
