@@ -177,7 +177,8 @@ function Rules() {
             <p>
               Tot aan de start van de eerste etappe kun je renners
               toevoegen en verwijderen. Na de deadline
-              wordt je ploeg definitief.
+              wordt je ploeg definitief. 
+              De lijst met renners wordt dagelijks bijgewerkt zodra de deelnemende teams hun selecties bekendmaken.
             </p>
           </RuleSection>
 
