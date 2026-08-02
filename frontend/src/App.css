@@ -991,3 +991,17 @@ tbody tr:hover {
   outline: 3px solid rgba(180, 35, 24, 0.25);
   outline-offset: 2px;
 }
+
+.main-navbar__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.main-navbar__logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}

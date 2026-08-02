@@ -39,8 +39,40 @@ export default function Navbar({
         className="main-navbar__title"
         onClick={() => openPage("home")}
       >
-        <span aria-hidden="true">🚴</span>{" "}
-        GiroTourVuelta Wielerspel
+        <img
+          src="/images/logo.webp"
+          alt="GTV"
+          className="main-navbar__logo"
+        />
+
+        <span>
+          <span
+            style={{
+              color: "#ff4fa3",
+            }}
+          >
+            Giro
+          </span>
+
+          <span
+            style={{
+              color: "#ffd700",
+            }}
+          >
+            Tour
+          </span>
+
+          <span
+            style={{
+              color: "#e51c23",
+            }}
+          >
+            Vuelta
+          </span>
+
+          {" "}
+          Wielerspel
+        </span>
       </h1>
 
       <button
