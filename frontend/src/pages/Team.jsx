@@ -72,9 +72,15 @@ function Team() {
     }
   }
 
-  async function loadCompetitionData(selectedCompetitionId) {
-    setLoading(true);
-    setError("");
+  async function loadCompetitionData(
+      selectedCompetitionId,
+      showLoading = true
+    ) {
+      if (showLoading) {
+        setLoading(true);
+      }
+
+      setError("");
 
     try {
       const [competitionCyclists, myTeam, stageData] =
@@ -109,9 +115,10 @@ function Team() {
       console.error(error);
       setError(error.message);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  }
 
   async function handleAdd(competitionCyclistId) {
     setSavingId(competitionCyclistId);
@@ -124,7 +131,10 @@ function Team() {
         competitionCyclistId
       );
 
-      await loadCompetitionData(competitionId);
+      await loadCompetitionData(
+        competitionId,
+        false
+      );
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -144,7 +154,10 @@ function Team() {
         competitionCyclistId
       );
 
-      await loadCompetitionData(competitionId);
+      await loadCompetitionData(
+        competitionId,
+        false
+      );
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -226,7 +239,10 @@ function Team() {
         result.message ?? "De jokers zijn opgeslagen."
       );
 
-      await loadCompetitionData(competitionId);
+      await loadCompetitionData(
+        competitionId,
+        false
+      );
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -283,7 +299,10 @@ function Team() {
       setSelectedTransferCyclist(null);
       setSearch("");
 
-      await loadCompetitionData(competitionId);
+      await loadCompetitionData(
+        competitionId,
+        false
+      );
     } catch (error) {
       console.error(error);
       setError(error.message);
