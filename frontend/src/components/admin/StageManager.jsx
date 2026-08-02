@@ -214,7 +214,85 @@ function StageManager({ competition }) {
       )}
 
       <div className="stage-manager-layout">
-        <section className="responsive-card">
+        
+        <section
+          className="responsive-card"
+          style={{
+            minWidth: 0,
+          }}
+        >
+          <h4>Etappeoverzicht</h4>
+
+          {loading ? (
+            <p>Etappes laden...</p>
+          ) : sortedStages.length === 0 ? (
+            <p>Er zijn nog geen etappes toegevoegd.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <TableHeader>Nr.</TableHeader>
+                    <TableHeader>Datum</TableHeader>
+                    <TableHeader>Starttijd</TableHeader>
+                    <TableHeader>Route</TableHeader>
+                    <TableHeader>Type</TableHeader>
+                    <TableHeader>Uitslag</TableHeader>
+                    <TableHeader>Verwijderen</TableHeader>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {sortedStages.map((stage) => (
+                    <tr
+                      key={stage.id}
+                      onClick={() => startEditing(stage)}
+                      style={{
+                        cursor: "pointer",
+                      }}
+                      title={`Etappe ${stage.stageNumber} bewerken`}
+                    >
+                      <TableCell>
+                        <strong>{stage.stageNumber}</strong>
+                      </TableCell>
+                      <TableCell>{formatDisplayDate(stage.date)}</TableCell>
+                      <TableCell>{formatDisplayDateTime(stage.startTime)}</TableCell>
+                      <TableCell>
+                        {stage.startLocation} {" → "} {stage.finishLocation}
+                      </TableCell>
+                      <TableCell>{getStageTypeLabel(stage.type)}</TableCell>
+                      <TableCell>
+                        {stage.resultsPublished ? "Gepubliceerd" : "Niet gepubliceerd"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="responsive-actions">
+                          <button
+                            type="button"
+                            className="button-danger"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDelete(stage);
+                            }}
+                            disabled={
+                              saving ||
+                              deletingStageId === stage.id
+                            }
+                          >
+                            {deletingStageId === stage.id
+                              ? "Verwijderen..."
+                              : "Verwijderen"}
+                          </button>
+                        </div>
+                      </TableCell>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+<section className="responsive-card">
           <h4>{editingStageId !== null ? "Etappe wijzigen" : "Etappe toevoegen"}</h4>
 
           <form onSubmit={handleSubmit}>
@@ -302,77 +380,10 @@ function StageManager({ competition }) {
           </form>
         </section>
 
-        <section
-          className="responsive-card"
-          style={{
-            minWidth: 0,
-          }}
-        >
-          <h4>Etappeoverzicht</h4>
-
-          {loading ? (
-            <p>Etappes laden...</p>
-          ) : sortedStages.length === 0 ? (
-            <p>Er zijn nog geen etappes toegevoegd.</p>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <TableHeader>Nr.</TableHeader>
-                    <TableHeader>Datum</TableHeader>
-                    <TableHeader>Starttijd</TableHeader>
-                    <TableHeader>Route</TableHeader>
-                    <TableHeader>Type</TableHeader>
-                    <TableHeader>Uitslag</TableHeader>
-                    <TableHeader>Acties</TableHeader>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {sortedStages.map((stage) => (
-                    <tr key={stage.id}>
-                      <TableCell>
-                        <strong>{stage.stageNumber}</strong>
-                      </TableCell>
-                      <TableCell>{formatDisplayDate(stage.date)}</TableCell>
-                      <TableCell>{formatDisplayDateTime(stage.startTime)}</TableCell>
-                      <TableCell>
-                        {stage.startLocation} {" → "} {stage.finishLocation}
-                      </TableCell>
-                      <TableCell>{getStageTypeLabel(stage.type)}</TableCell>
-                      <TableCell>
-                        {stage.resultsPublished ? "Gepubliceerd" : "Niet gepubliceerd"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="responsive-actions">
-                          <button
-                            type="button"
-                            onClick={() => startEditing(stage)}
-                            disabled={saving || deletingStageId === stage.id}
-                          >
-                            Wijzigen
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(stage)}
-                            disabled={saving || deletingStageId === stage.id}
-                          >
-                            {deletingStageId === stage.id
-                              ? "Verwijderen..."
-                              : "Verwijderen"}
-                          </button>
-                        </div>
-                      </TableCell>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
       </div>
     </section>
+
+    
   );
 }
 

@@ -40,7 +40,7 @@ export default function Navbar({
         onClick={() => openPage("home")}
       >
         <span aria-hidden="true">🚴</span>{" "}
-        Wielerspel
+        GiroTourVuelta Wielerspel
       </h1>
 
       <button
@@ -124,7 +124,7 @@ export default function Navbar({
               Hall of Fame
             </button>
 
-            {player && (
+            {loggedIn && (
               <button
                 type="button"
                 className={getButtonClass("rules")}
