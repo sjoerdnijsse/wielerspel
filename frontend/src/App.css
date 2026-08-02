@@ -1005,3 +1005,55 @@ tbody tr:hover {
   object-fit: contain;
   flex-shrink: 0;
 }
+
+.home-countdown {
+  margin: 28px auto 0;
+  padding: 22px;
+  max-width: 760px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.72);
+  color: white;
+  backdrop-filter: blur(4px);
+}
+
+.home-countdown__label {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.home-countdown__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home-countdown__block {
+  padding: 14px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.home-countdown__block strong {
+  display: block;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  line-height: 1;
+}
+
+.home-countdown__block span {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.home-countdown__started {
+  display: block;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 560px) {
+  .home-countdown__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

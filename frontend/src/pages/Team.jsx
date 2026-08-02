@@ -14,6 +14,7 @@ import {
 import CompetitionSelector from "../components/team/CompetitionSelector";
 import TeamList from "../components/team/TeamList";
 import AvailableCyclists from "../components/team/AvailableCyclists";
+import Countdown from "../components/Countdown";
 
 function Team() {
   const [competitions, setCompetitions] = useState([]);
@@ -30,6 +31,8 @@ function Team() {
   const [savingJokers, setSavingJokers] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [firstStageStartTime, setFirstStageStartTime] =
+  useState(null);
 
   const [
     selectedTransferCyclist,
@@ -97,6 +100,11 @@ function Team() {
       setStages(sortedStages);
       setTeamData(myTeam);
       setJokerSelections(savedJokers);
+      setFirstStageStartTime(
+        sortedStages.length > 0
+          ? sortedStages[0].startTime
+          : null
+      );
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -326,6 +334,13 @@ function Team() {
     <main className="page-container">
       
       <h2>Mijn ploeg</h2>
+
+      {!teamData?.teamLocked &&
+      firstStageStartTime && (
+        <Countdown
+          targetDate={firstStageStartTime}
+        />
+    )}
 
       <CompetitionSelector
         competitions={competitions}
