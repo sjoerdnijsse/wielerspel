@@ -119,6 +119,7 @@ function Team() {
         setLoading(false);
       }
     }
+  }
 
   async function handleAdd(competitionCyclistId) {
     setSavingId(competitionCyclistId);
