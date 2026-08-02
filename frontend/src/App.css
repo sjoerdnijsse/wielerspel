@@ -1007,53 +1007,79 @@ tbody tr:hover {
 }
 
 .home-countdown {
-  margin: 28px auto 0;
-  padding: 22px;
-  max-width: 760px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.72);
+  margin: 15px auto 25px;
+  padding: 14px 18px;
+  max-width: 600px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.75);
   color: white;
   backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .home-countdown__label {
-  margin: 0 0 16px;
-  font-size: 1rem;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
   font-weight: 700;
+  text-align: center;
+  opacity: 0.9;
 }
 
 .home-countdown__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .home-countdown__block {
-  padding: 14px 10px;
-  border-radius: 12px;
+  padding: 10px 8px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.12);
+  text-align: center;
 }
 
 .home-countdown__block strong {
   display: block;
-  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  font-weight: 700;
   line-height: 1;
 }
 
 .home-countdown__block span {
   display: block;
-  margin-top: 6px;
-  font-size: 0.82rem;
-  opacity: 0.85;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
 }
 
 .home-countdown__started {
   display: block;
-  font-size: 1.2rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 @media (max-width: 560px) {
+  .home-countdown {
+    padding: 12px;
+  }
+
   .home-countdown__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .home-countdown__block {
+    padding: 8px 6px;
+  }
+
+  .home-countdown__block strong {
+    font-size: 1.2rem;
+  }
+
+  .home-countdown__block span {
+    font-size: 0.68rem;
   }
 }
