@@ -195,7 +195,7 @@ public class AuthController : ControllerBase
             issuer: jwtIssuer,
             audience: jwtIssuer,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(8),
+            expires: DateTime.UtcNow.AddDays(30),
             signingCredentials: credentials
         );
 
