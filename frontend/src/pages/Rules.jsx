@@ -50,19 +50,25 @@ function Rules() {
     try {
       const data = await getCompetitions();
 
-      setCompetitions(data);
+      const activeCompetition = data.find(
+        (competition) => competition.isActive
+      );
 
-      if (data.length > 0) {
-        setCompetitionId(data[0].id);
+      if (activeCompetition) {
+        setCompetitionId(activeCompetition.id);
       } else {
+        setCompetitionId("");
+        setTeamData(null);
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
+
       setError(
         error.message ||
-          "De competities konden niet worden geladen."
+          "De competitie kon niet worden geladen."
       );
+
       setLoading(false);
     }
   }
@@ -99,9 +105,7 @@ function Rules() {
 
   return (
     <main className="page-container">
-
       <h2>Spelregels</h2>
-
 
       {error && (
         <p
