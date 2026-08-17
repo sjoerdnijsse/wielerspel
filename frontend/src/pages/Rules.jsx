@@ -73,37 +73,32 @@ function Rules() {
     }
   }
 
-  async function loadCompetitions() {
+async function loadCompetitionRules(
+    selectedCompetitionId
+  ) {
     setLoading(true);
     setError("");
 
     try {
-      const data = await getCompetitions();
-
-      const activeCompetition = data.find(
-        (competition) => competition.isActive
+      const data = await getMyCompetitionTeam(
+        selectedCompetitionId
       );
 
-      if (activeCompetition) {
-        setCompetitionId(activeCompetition.id);
-      } else {
-        setCompetitionId("");
-        setTeamData(null);
-        setLoading(false);
-      }
+      setTeamData(data);
     } catch (error) {
       console.error(error);
+      setTeamData(null);
 
       setError(
         error.message ||
-          "De competitie kon niet worden geladen."
+          "De spelregels konden niet worden geladen."
       );
-
+    } finally {
       setLoading(false);
     }
   }
 
-  return (
+    return (
     <main className="page-container">
       <h2>Spelregels</h2>
 
