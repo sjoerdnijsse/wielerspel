@@ -242,6 +242,10 @@ public class CompetitionCyclistsController : ControllerBase
 
     // Alleen moderators mogen een renner uit een
     // competitie verwijderen.
+    //
+    // Als spelers deze renner al in hun ploeg hebben,
+    // wordt de renner ook automatisch uit die
+    // spelersploegen verwijderd.
     [HttpDelete("{cyclistId:guid}")]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> RemoveCompetitionCyclist(
@@ -251,6 +255,7 @@ public class CompetitionCyclistsController : ControllerBase
     {
         var competitionCyclist =
             await _context.CompetitionCyclists
+                .Include(x => x.Cyclist)
                 .FirstOrDefaultAsync(x =>
                     x.CompetitionId == competitionId &&
                     x.CyclistId == cyclistId
@@ -263,29 +268,54 @@ public class CompetitionCyclistsController : ControllerBase
             );
         }
 
-        var isSelectedByPlayer =
-            await _context.CompetitionUserCyclists
-                .AnyAsync(x =>
-                    x.CompetitionCyclistId ==
-                    competitionCyclist.Id
-                );
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
-        if (isSelectedByPlayer)
+        try
         {
-            return BadRequest(
-                "Deze renner kan niet uit de wedstrijd worden verwijderd omdat hij in één of meer spelersploegen zit."
+            // Zoek alle spelers die deze renner
+            // in hun ploeg hebben geselecteerd.
+            var playerSelections =
+                await _context.CompetitionUserCyclists
+                    .Where(x =>
+                        x.CompetitionCyclistId ==
+                        competitionCyclist.Id
+                    )
+                    .ToListAsync();
+
+            var affectedPlayerCount =
+                playerSelections.Count;
+
+            // Verwijder de renner eerst uit alle
+            // spelersploegen.
+            if (playerSelections.Count > 0)
+            {
+                _context.CompetitionUserCyclists
+                    .RemoveRange(playerSelections);
+            }
+
+            // Daarna kan de wedstrijdrenner zelf
+            // worden verwijderd.
+            _context.CompetitionCyclists.Remove(
+                competitionCyclist
             );
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new
+            {
+                message =
+                    affectedPlayerCount > 0
+                        ? $"{competitionCyclist.Cyclist.Name} is uit de wedstrijd verwijderd en uit {affectedPlayerCount} spelersploeg(en) gehaald."
+                        : $"{competitionCyclist.Cyclist.Name} is uit de wedstrijd verwijderd.",
+                affectedPlayerCount
+            });
         }
-
-        _context.CompetitionCyclists.Remove(
-            competitionCyclist
-        );
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
+        catch
         {
-            message = "Renner uit wedstrijd verwijderd"
-        });
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }

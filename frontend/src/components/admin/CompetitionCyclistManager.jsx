@@ -9,6 +9,7 @@ import {
 } from "../../services/Api";
 
 const NO_TEAM_ID = "no-team";
+const TEAM_SIZE = 8;
 
 function CompetitionCyclistManager({ competition }) {
   const [allCyclists, setAllCyclists] = useState([]);
@@ -121,28 +122,66 @@ function CompetitionCyclistManager({ competition }) {
   }, [teams, selectedTeamId]);
 
   const selectedTeamCyclists = useMemo(() => {
-    const searchValue = search.trim().toLowerCase();
+  const searchValue = search.trim().toLowerCase();
 
-    return allCyclists
-      .filter((cyclist) => {
-        const teamId = cyclist.team?.id ?? NO_TEAM_ID;
-        return teamId === selectedTeamId;
-      })
-      .filter((cyclist) => {
-        if (!searchValue) {
-          return true;
-        }
+  return allCyclists
+    .filter((cyclist) => {
+      const teamId =
+        cyclist.team?.id ?? NO_TEAM_ID;
 
-        return cyclist.name
-          .toLowerCase()
-          .includes(searchValue);
-      })
-      .sort((a, b) =>
-        a.name.localeCompare(b.name, "nl", {
+      return teamId === selectedTeamId;
+    })
+    .filter((cyclist) => {
+      if (!searchValue) {
+        return true;
+      }
+
+      return cyclist.name
+        .toLowerCase()
+        .includes(searchValue);
+    })
+    .sort((a, b) =>
+      a.name.localeCompare(
+        b.name,
+        "nl",
+        {
           sensitivity: "base",
-        })
-      );
-  }, [allCyclists, selectedTeamId, search]);
+        }
+      )
+    );
+}, [
+  allCyclists,
+  selectedTeamId,
+  search,
+]);
+
+const addedCyclists = useMemo(() => {
+  return selectedTeamCyclists.filter(
+    (cyclist) =>
+      competitionCyclistByCyclistId.has(
+        cyclist.id
+      )
+  );
+}, [
+  selectedTeamCyclists,
+  competitionCyclistByCyclistId,
+]);
+
+const availableTeamCyclists = useMemo(() => {
+  return selectedTeamCyclists.filter(
+    (cyclist) =>
+      !competitionCyclistByCyclistId.has(
+        cyclist.id
+      )
+  );
+}, [
+  selectedTeamCyclists,
+  competitionCyclistByCyclistId,
+]);
+
+const selectedTeamIsComplete =
+  (selectedTeam?.competitionCyclistCount ?? 0) >=
+  TEAM_SIZE;
 
   function selectTeam(teamId) {
     setSelectedTeamId(teamId);
@@ -324,56 +363,139 @@ function CompetitionCyclistManager({ competition }) {
         <p>Renners laden...</p>
       ) : teams.length === 0 ? (
         <p>
-          Er zijn nog geen ploegen met renners beschikbaar.
+          Er zijn nog geen ploegen met renners
+          beschikbaar.
         </p>
       ) : (
-        <div className="competition-cyclist-layout">
-          <TeamNavigation
-            teams={teams}
-            selectedTeamId={selectedTeamId}
-            onSelectTeam={selectTeam}
-          />
-
-          <section className="responsive-card">
-            <header style={{ marginBottom: "20px" }}>
-              <h4 style={{ marginTop: 0 }}>
-                {selectedTeam?.name ?? "Ploeg"}
-              </h4>
-
-              {selectedTeam && (
-                <p>
-                  {selectedTeam.competitionCyclistCount} van{" "}
-                  {selectedTeam.cyclistCount} renners toegevoegd
-                </p>
-              )}
-            </header>
-
+        <>
+          <section
+            className="responsive-card"
+            style={{
+              marginBottom: "20px",
+            }}
+          >
             <label
-              htmlFor="competition-cyclist-search"
+              htmlFor="competition-team-select"
               style={{
                 display: "block",
                 marginBottom: "8px",
+                fontWeight: "600",
               }}
             >
-              Zoeken binnen deze ploeg
+              Kies een ploeg
             </label>
 
-            <input
-              id="competition-cyclist-search"
-              type="search"
-              value={search}
+            <select
+              id="competition-team-select"
+              value={selectedTeamId}
               onChange={(event) =>
-                setSearch(event.target.value)
+                selectTeam(event.target.value)
               }
-              placeholder="Zoek op naam"
               className="responsive-input"
               style={{
-                marginBottom: "20px",
+                borderColor:
+                  selectedTeamIsComplete
+                    ? "#2f7d32"
+                    : undefined,
+                backgroundColor:
+                  selectedTeamIsComplete
+                    ? "#edf7ee"
+                    : undefined,
+                fontWeight:
+                  selectedTeamIsComplete
+                    ? "700"
+                    : undefined,
               }}
-            />
+            >
+              {teams.map((team) => {
+                const complete =
+                  team.competitionCyclistCount >=
+                  TEAM_SIZE;
 
-            {selectedTeamCyclists.length === 0 ? (
-              <p>Geen renners gevonden.</p>
+                return (
+                  <option
+                    key={team.id}
+                    value={team.id}
+                  >
+                    {complete ? "✓ " : ""}
+                    {team.name} (
+                    {team.competitionCyclistCount}/
+                    {TEAM_SIZE})
+                  </option>
+                );
+              })}
+            </select>
+
+            {selectedTeam && (
+              <div
+                style={{
+                  marginTop: "12px",
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <strong>{selectedTeam.name}</strong>
+
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "4px 9px",
+                    borderRadius: "999px",
+                    fontSize: "0.85rem",
+                    fontWeight: "700",
+                    backgroundColor:
+                      selectedTeamIsComplete
+                        ? "#dff3e2"
+                        : "#f2f2f2",
+                    color:
+                      selectedTeamIsComplete
+                        ? "#216e2d"
+                        : "inherit",
+                  }}
+                >
+                  {selectedTeam.competitionCyclistCount}{" "}
+                  / {TEAM_SIZE} geselecteerd
+                  {selectedTeamIsComplete
+                    ? " ✓"
+                    : ""}
+                </span>
+              </div>
+            )}
+          </section>
+
+          <section
+            className="responsive-card"
+            style={{
+              marginBottom: "20px",
+            }}
+          >
+            <header
+              style={{
+                marginBottom: "15px",
+              }}
+            >
+              <h4 style={{ margin: 0 }}>
+                Geselecteerde renners
+              </h4>
+
+              <p
+                style={{
+                  marginBottom: 0,
+                }}
+              >
+                {addedCyclists.length} van{" "}
+                {TEAM_SIZE} renners geselecteerd
+                voor deze ploeg.
+              </p>
+            </header>
+
+            {addedCyclists.length === 0 ? (
+              <p>
+                Uit deze ploeg zijn nog geen
+                renners aan de wedstrijd toegevoegd.
+              </p>
             ) : (
               <ul
                 style={{
@@ -382,7 +504,7 @@ function CompetitionCyclistManager({ competition }) {
                   margin: 0,
                 }}
               >
-                {selectedTeamCyclists.map((cyclist) => {
+                {addedCyclists.map((cyclist) => {
                   const competitionCyclist =
                     competitionCyclistByCyclistId.get(
                       cyclist.id
@@ -409,12 +531,22 @@ function CompetitionCyclistManager({ competition }) {
                       deletingCyclistId={
                         deletingCyclistId
                       }
-                      onStartAdding={startAdding}
-                      onCancelAdding={cancelAdding}
-                      onNewPriceChange={setNewPrice}
+                      onStartAdding={
+                        startAdding
+                      }
+                      onCancelAdding={
+                        cancelAdding
+                      }
+                      onNewPriceChange={
+                        setNewPrice
+                      }
                       onAdd={handleAdd}
-                      onStartEditing={startEditing}
-                      onCancelEditing={cancelEditing}
+                      onStartEditing={
+                        startEditing
+                      }
+                      onCancelEditing={
+                        cancelEditing
+                      }
                       onEditingPriceChange={
                         setEditingPrice
                       }
@@ -426,65 +558,128 @@ function CompetitionCyclistManager({ competition }) {
               </ul>
             )}
           </section>
-        </div>
-      )}
-    </section>
-  );
-}
 
-function TeamNavigation({
-  teams,
-  selectedTeamId,
-  onSelectTeam,
-}) {
-  return (
-    <aside className="responsive-card competition-team-navigation">
-      <h4 style={{ marginTop: 0 }}>Ploegen</h4>
+          <section className="responsive-card">
+            <header
+              style={{
+                marginBottom: "18px",
+              }}
+            >
+              <h4 style={{ margin: 0 }}>
+                Beschikbare renners
+              </h4>
 
-      <ul className="competition-team-nav">
-        {teams.map((team) => {
-          const isSelected = team.id === selectedTeamId;
+              <p>
+                Renners van{" "}
+                <strong>
+                  {selectedTeam?.name}
+                </strong>{" "}
+                die nog niet aan deze wedstrijd
+                zijn toegevoegd.
+              </p>
+            </header>
 
-          return (
-            <li key={team.id}>
-              <button
-                type="button"
-                onClick={() => onSelectTeam(team.id)}
-                aria-pressed={isSelected}
-                className="competition-team-nav__button"
+            <label
+              htmlFor="competition-cyclist-search"
+              style={{
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              Zoeken binnen deze ploeg
+            </label>
+
+            <input
+              id="competition-cyclist-search"
+              type="search"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Zoek op naam"
+              className="responsive-input"
+              style={{
+                marginBottom: "20px",
+              }}
+            />
+
+            {selectedTeamIsComplete && (
+              <p
                 style={{
-                  width: "100%",
                   padding: "12px",
-                  textAlign: "left",
-                  border: isSelected
-                    ? "2px solid currentColor"
-                    : "1px solid #ccc",
                   borderRadius: "8px",
-                  fontWeight: isSelected
-                    ? "bold"
-                    : "normal",
-                  cursor: "pointer",
+                  backgroundColor: "#edf7ee",
+                  color: "#216e2d",
+                  fontWeight: "600",
                 }}
               >
-                <span
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                  }}
-                >
-                  {team.name}
-                </span>
+                ✓ Deze ploeg is compleet. Er zijn{" "}
+                {TEAM_SIZE} renners geselecteerd.
+              </p>
+            )}
 
-                <small>
-                  {team.competitionCyclistCount} van{" "}
-                  {team.cyclistCount} toegevoegd
-                </small>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </aside>
+            {availableTeamCyclists.length === 0 ? (
+              <p>
+                Geen beschikbare renners gevonden.
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                {availableTeamCyclists.map(
+                  (cyclist) => (
+                    <CyclistRow
+                      key={cyclist.id}
+                      cyclist={cyclist}
+                      competitionCyclist={null}
+                      selectedCyclistId={
+                        selectedCyclistId
+                      }
+                      newPrice={newPrice}
+                      editingCyclistId={
+                        editingCyclistId
+                      }
+                      editingPrice={editingPrice}
+                      savingCyclistId={
+                        savingCyclistId
+                      }
+                      deletingCyclistId={
+                        deletingCyclistId
+                      }
+                      onStartAdding={
+                        startAdding
+                      }
+                      onCancelAdding={
+                        cancelAdding
+                      }
+                      onNewPriceChange={
+                        setNewPrice
+                      }
+                      onAdd={handleAdd}
+                      onStartEditing={
+                        startEditing
+                      }
+                      onCancelEditing={
+                        cancelEditing
+                      }
+                      onEditingPriceChange={
+                        setEditingPrice
+                      }
+                      onUpdate={handleUpdate}
+                      onDelete={handleDelete}
+                    />
+                  )
+                )}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
+    </section>
   );
 }
 
