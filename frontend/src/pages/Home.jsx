@@ -57,8 +57,8 @@ function Home() {
           }}
         >
           <img
-            src="/images/logo.png"
-            alt="GiroTourVuelta logo"
+            src="/images/logo.webp"
+            alt="GTV"
             style={{
               width: "70px",
               height: "70px",

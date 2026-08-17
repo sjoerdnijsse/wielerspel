@@ -221,7 +221,7 @@ function Rules() {
               In de gekozen jokeretappe worden alleen de{" "}
               <strong>punten uit de etappeuitslag</strong>{" "}
               verdubbeld. Bonuspunten voor de
-              leiderstrui, puntentrui en bergtrui worden
+              leiderstrui, puntentrui, bergtrui en jongerentrui worden
               niet verdubbeld.
             </p>
 
@@ -395,6 +395,14 @@ function Rules() {
                       <strong>5</strong>
                     </TableCell>
                   </tr>
+
+                  <tr>
+                    <TableCell>⚪ Witte trui</TableCell>
+                    <TableCell>
+                      <strong>5</strong>
+                    </TableCell>
+                  </tr>
+
                 </tbody>
               </table>
             </div>
@@ -408,9 +416,9 @@ function Rules() {
             </p>
 
             <p>
-              Alleen{" "}
+              Alleen de{" "}
               <strong>
-                etapperesultaten
+                punten uit etapperesultaten
               </strong>{" "}
               tellen mee voor het klassement.
             </p>

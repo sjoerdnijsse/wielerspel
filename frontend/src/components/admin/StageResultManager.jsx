@@ -56,6 +56,11 @@ export default function StageResultManager({ competition }) {
     setPolkaDotJerseyCompetitionCyclistId,
   ] = useState("");
 
+  const [
+    whiteJerseyCompetitionCyclistId,
+    setWhiteJerseyCompetitionCyclistId,
+  ] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [loadingResults, setLoadingResults] =
     useState(false);
@@ -82,6 +87,7 @@ export default function StageResultManager({ competition }) {
     setYellowJerseyCompetitionCyclistId("");
     setGreenJerseyCompetitionCyclistId("");
     setPolkaDotJerseyCompetitionCyclistId("");
+    setWhiteJerseyCompetitionCyclistId("");
   }
 
   async function loadInitialData() {
@@ -169,6 +175,12 @@ export default function StageResultManager({ competition }) {
         stageData.polkaDotJerseyCompetitionCyclistId ??
           ""
       );
+
+      setWhiteJerseyCompetitionCyclistId(
+        stageData.whiteJerseyCompetitionCyclistId ??
+          ""
+      );
+
     } catch (err) {
       setError(
         err.message ||
@@ -332,6 +344,13 @@ export default function StageResultManager({ competition }) {
       );
     }
 
+    if (!whiteJerseyCompetitionCyclistId) {
+      return (
+        "Selecteer de drager van de " +
+        "witte trui."
+      );
+    }
+
     return "";
   }
 
@@ -374,7 +393,8 @@ export default function StageResultManager({ competition }) {
         results,
         yellowJerseyCompetitionCyclistId,
         greenJerseyCompetitionCyclistId,
-        polkaDotJerseyCompetitionCyclistId
+        polkaDotJerseyCompetitionCyclistId,
+        whiteJerseyCompetitionCyclistId
       );
 
       setStages((currentStages) =>
@@ -562,7 +582,7 @@ export default function StageResultManager({ competition }) {
 
           <p>
             Selecteer per positie de juiste renner en wijs
-            daarna de drie truiendragers aan. De punten
+            daarna de vier truiendragers aan. De punten
             worden automatisch toegekend.
           </p>
         </div>
@@ -908,6 +928,24 @@ export default function StageResultManager({ competition }) {
                 onChange={(value) =>
                   handleJerseyChange(
                     setPolkaDotJerseyCompetitionCyclistId,
+                    value
+                  )
+                }
+                cyclists={cyclists}
+                getCyclistLabel={getCyclistLabel}
+                disabled={saving}
+              />
+
+              <JerseyField
+                id="white-jersey"
+                label="⚪ Witte trui"
+                points={5}
+                value={
+                  whiteJerseyCompetitionCyclistId
+                }
+                onChange={(value) =>
+                  handleJerseyChange(
+                    setWhiteJerseyCompetitionCyclistId,
                     value
                   )
                 }
