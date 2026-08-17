@@ -50,24 +50,28 @@ function Team() {
   }, [competitionId]);
 
   async function loadCompetitions() {
-    setLoading(true);
-    setError("");
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = await getCompetitions();
+      try {
+        const data = await getCompetitions();
 
- 
-      const activeCompetition = data.find(
-        (competition) => competition.isActive
-      );
+        const activeCompetition = data.find(
+          (competition) => competition.isActive
+        );
 
-      if (activeCompetition) {
-        setCompetitionId(activeCompetition.id);
-      } else {
-        setCompetitionId("");
+        if (activeCompetition) {
+          setCompetitionId(activeCompetition.id);
+        } else {
+          setCompetitionId("");
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error(error);
+        setError(error.message);
         setLoading(false);
       }
-  }
+    }
 
   async function loadCompetitionData(
       selectedCompetitionId,
