@@ -14,6 +14,7 @@ public class StandingsController : ControllerBase
     private const int YellowJerseyPoints = 10;
     private const int GreenJerseyPoints = 5;
     private const int PolkaDotJerseyPoints = 5;
+    private const int WhiteJerseyPoints = 5;
 
     private readonly WielerspelDbContext _context;
 
@@ -73,18 +74,17 @@ public class StandingsController : ControllerBase
                     stage.ResultsPublished
                 )
                 .Select(stage => new
-                {
-                    StageId = stage.Id,
+                    {
+                        StageId = stage.Id,
 
-                    stage
-                        .YellowJerseyCompetitionCyclistId,
+                        stage.YellowJerseyCompetitionCyclistId,
 
-                    stage
-                        .GreenJerseyCompetitionCyclistId,
+                        stage.GreenJerseyCompetitionCyclistId,
 
-                    stage
-                        .PolkaDotJerseyCompetitionCyclistId
-                })
+                        stage.PolkaDotJerseyCompetitionCyclistId,
+
+                        stage.WhiteJerseyCompetitionCyclistId
+                    })
                 .ToListAsync();
 
         var publishedStageIds = publishedStages
@@ -159,6 +159,12 @@ public class StandingsController : ControllerBase
                 stage
                     .PolkaDotJerseyCompetitionCyclistId,
                 PolkaDotJerseyPoints
+            );
+
+            AddPoints(
+                jerseyPointsByCyclist,
+                stage.WhiteJerseyCompetitionCyclistId,
+                WhiteJerseyPoints
             );
         }
 
@@ -279,14 +285,13 @@ public class StandingsController : ControllerBase
                     StageId = stage.Id,
                     stage.StageNumber,
 
-                    stage
-                        .YellowJerseyCompetitionCyclistId,
+                    stage.YellowJerseyCompetitionCyclistId,
 
-                    stage
-                        .GreenJerseyCompetitionCyclistId,
+                    stage.GreenJerseyCompetitionCyclistId,
 
-                    stage
-                        .PolkaDotJerseyCompetitionCyclistId
+                    stage.PolkaDotJerseyCompetitionCyclistId,
+
+                    stage.WhiteJerseyCompetitionCyclistId
                 })
                 .ToListAsync();
 
@@ -403,6 +408,14 @@ public class StandingsController : ControllerBase
                             .PolkaDotJerseyCompetitionCyclistId
                     )
                         ? PolkaDotJerseyPoints
+                        : 0;
+
+                var whitePoints =
+                    HasCyclist(
+                        playerCyclistIdSet,
+                        stage.WhiteJerseyCompetitionCyclistId
+                    )
+                        ? WhiteJerseyPoints
                         : 0;
 
                 return new StageStandingPointsDto

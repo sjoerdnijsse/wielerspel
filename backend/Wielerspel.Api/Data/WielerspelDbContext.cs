@@ -95,6 +95,30 @@ public class WielerspelDbContext : DbContext
                 x.StageNumber
             })
             .IsUnique();
+        
+        modelBuilder.Entity<Stage>()
+            .HasOne(x => x.YellowJerseyCompetitionCyclist)
+            .WithMany()
+            .HasForeignKey(x => x.YellowJerseyCompetitionCyclistId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Stage>()
+            .HasOne(x => x.GreenJerseyCompetitionCyclist)
+            .WithMany()
+            .HasForeignKey(x => x.GreenJerseyCompetitionCyclistId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Stage>()
+            .HasOne(x => x.PolkaDotJerseyCompetitionCyclist)
+            .WithMany()
+            .HasForeignKey(x => x.PolkaDotJerseyCompetitionCyclistId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Stage>()
+            .HasOne(x => x.WhiteJerseyCompetitionCyclist)
+            .WithMany()
+            .HasForeignKey(x => x.WhiteJerseyCompetitionCyclistId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<StageResult>()
             .HasIndex(x => new

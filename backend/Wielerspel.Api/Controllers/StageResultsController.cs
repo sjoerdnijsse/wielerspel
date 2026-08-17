@@ -62,7 +62,8 @@ public class StageResultsController : ControllerBase
             results,
             stage.YellowJerseyCompetitionCyclistId,
             stage.GreenJerseyCompetitionCyclistId,
-            stage.PolkaDotJerseyCompetitionCyclistId
+            stage.PolkaDotJerseyCompetitionCyclistId,
+            stage.WhiteJerseyCompetitionCyclistId
         });
     }
 
@@ -161,12 +162,15 @@ public class StageResultsController : ControllerBase
             request.GreenJerseyCompetitionCyclistId
                 == null ||
             request.PolkaDotJerseyCompetitionCyclistId
+                == null ||
+            request.WhiteJerseyCompetitionCyclistId
                 == null
         )
         {
             return BadRequest(
                 "Selecteer de drager van de " +
-                "leiderstrui, puntentrui en bergtrui."
+                "leiderstrui, puntentrui, bergtrui " +
+                "en witte trui."
             );
         }
 
@@ -185,6 +189,11 @@ public class StageResultsController : ControllerBase
             .Append(
                 request
                     .PolkaDotJerseyCompetitionCyclistId
+                    .Value
+            )
+            .Append(
+                request
+                    .WhiteJerseyCompetitionCyclistId
                     .Value
             )
             .Distinct()
@@ -240,6 +249,9 @@ public class StageResultsController : ControllerBase
         stage.PolkaDotJerseyCompetitionCyclistId =
             request.PolkaDotJerseyCompetitionCyclistId;
 
+        stage.WhiteJerseyCompetitionCyclistId =
+            request.WhiteJerseyCompetitionCyclistId;
+
         // Een gewijzigde uitslag moet opnieuw
         // gepubliceerd worden.
         stage.ResultsPublished = false;
@@ -281,6 +293,7 @@ public class StageResultsController : ControllerBase
         stage.YellowJerseyCompetitionCyclistId = null;
         stage.GreenJerseyCompetitionCyclistId = null;
         stage.PolkaDotJerseyCompetitionCyclistId = null;
+        stage.WhiteJerseyCompetitionCyclistId = null;
         stage.ResultsPublished = false;
 
         await _context.SaveChangesAsync();

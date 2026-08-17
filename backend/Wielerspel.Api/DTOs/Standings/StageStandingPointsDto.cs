@@ -16,10 +16,13 @@ public class StageStandingPointsDto
 
     public int PolkaDotJerseyPoints { get; set; }
 
+    public int WhiteJerseyPoints { get; set; }
+
     public int Points =>
         StageResultPoints +
         JokerPoints +
         YellowJerseyPoints +
         GreenJerseyPoints +
-        PolkaDotJerseyPoints;
+        PolkaDotJerseyPoints +
+        WhiteJerseyPoints;
 }

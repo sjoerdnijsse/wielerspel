@@ -26,6 +26,8 @@ public class Stage
 
     public Guid? PolkaDotJerseyCompetitionCyclistId { get; set; }
 
+    public Guid? WhiteJerseyCompetitionCyclistId { get; set; }
+
     public Competition Competition { get; set; } = null!;
 
     public CompetitionCyclist? YellowJerseyCompetitionCyclist
@@ -41,6 +43,12 @@ public class Stage
     }
 
     public CompetitionCyclist? PolkaDotJerseyCompetitionCyclist
+    {
+        get;
+        set;
+    }
+
+    public CompetitionCyclist? WhiteJerseyCompetitionCyclist
     {
         get;
         set;

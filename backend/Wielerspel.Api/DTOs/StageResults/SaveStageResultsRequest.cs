@@ -24,4 +24,10 @@ public class SaveStageResultsRequest
         get;
         set;
     }
+
+    public Guid? WhiteJerseyCompetitionCyclistId
+    {
+        get;
+        set;
+    }
 }
