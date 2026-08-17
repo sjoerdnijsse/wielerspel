@@ -71,7 +71,7 @@ export default function Navbar({
           </span>
 
           {" "}
-          Wielerspel
+          
         </span>
       </h1>
 

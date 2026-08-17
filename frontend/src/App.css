@@ -1083,3 +1083,448 @@ tbody tr:hover {
     font-size: 0.68rem;
   }
 }
+/* =========================================================
+   GiroTourVuelta Wielerspel
+   Nieuwe GTV-huisstijl
+   ========================================================= */
+
+:root {
+  --gtv-giro: #e83e8c;
+  --gtv-tour: #f2c500;
+  --gtv-vuelta: #d62828;
+
+  --gtv-black: #171717;
+  --gtv-dark: #252525;
+
+  --gtv-bg: #f3f2ed;
+  --gtv-surface: #ffffff;
+  --gtv-surface-alt: #f8f7f3;
+
+  --gtv-text: #202020;
+  --gtv-muted: #6d6d68;
+  --gtv-border: #d9d7d0;
+
+  --gtv-success: #287a3d;
+  --gtv-success-soft: #e7f3e9;
+
+  --gtv-danger: #b52b25;
+
+  --gtv-radius: 6px;
+}
+
+
+/* =========================
+   Algemene pagina
+   ========================= */
+
+body {
+  background: var(--gtv-bg);
+  color: var(--gtv-text);
+}
+
+.page-container {
+  max-width: 1180px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--gtv-text);
+}
+
+h2 {
+  margin-bottom: 22px;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-weight: 750;
+}
+
+
+/* =========================
+   Navbar
+   ========================= */
+
+.main-navbar {
+  padding: 12px 28px;
+
+  background: var(--gtv-black);
+
+  border-bottom: 3px solid transparent;
+
+  border-image:
+    linear-gradient(
+      90deg,
+      var(--gtv-giro) 0%,
+      var(--gtv-giro) 33%,
+      var(--gtv-tour) 33%,
+      var(--gtv-tour) 66%,
+      var(--gtv-vuelta) 66%,
+      var(--gtv-vuelta) 100%
+    )
+    1;
+
+  box-shadow: none;
+}
+
+.main-navbar__title {
+  color: white;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.main-navbar__title:hover {
+  color: white;
+}
+
+.main-navbar__logo {
+  width: 44px;
+  height: 44px;
+}
+
+
+/* Navigatie niet langer als allemaal losse cards */
+
+.main-navbar button,
+.main-navbar__link {
+  min-height: 38px;
+
+  padding: 8px 4px;
+
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+
+  color: #dedede;
+
+  box-shadow: none;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  letter-spacing: 0.025em;
+}
+
+.main-navbar button:hover:not(:disabled),
+.main-navbar__link:hover:not(:disabled) {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: white;
+
+  box-shadow: none;
+  transform: none;
+}
+
+.main-navbar__link--active {
+  background: transparent !important;
+  border-color: var(--gtv-tour) !important;
+  color: white !important;
+  box-shadow: none !important;
+}
+
+.main-navbar__link--active:hover:not(:disabled) {
+  background: transparent !important;
+  border-color: var(--gtv-tour) !important;
+  color: white !important;
+}
+
+
+/* =========================
+   Cards
+   ========================= */
+
+.responsive-card {
+  background: var(--gtv-surface);
+
+  border: 1px solid var(--gtv-border);
+  border-radius: var(--gtv-radius);
+
+  box-shadow: none;
+}
+
+.responsive-card:hover {
+  box-shadow: none;
+}
+
+
+/* =========================
+   Samenvatting
+   ========================= */
+
+.summary-card {
+  padding: 16px 18px;
+
+  background: var(--gtv-surface);
+
+  border: 1px solid var(--gtv-border);
+  border-top: 3px solid var(--gtv-dark);
+
+  border-radius: var(--gtv-radius);
+
+  box-shadow: none;
+}
+
+.summary-card:hover {
+  box-shadow: none;
+}
+
+.summary-card:nth-child(3n + 1) {
+  border-top-color: var(--gtv-giro);
+}
+
+.summary-card:nth-child(3n + 2) {
+  border-top-color: var(--gtv-tour);
+}
+
+.summary-card:nth-child(3n + 3) {
+  border-top-color: var(--gtv-vuelta);
+}
+
+.summary-card__label {
+  color: var(--gtv-muted);
+
+  font-size: 0.75rem;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.summary-card__value {
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+
+/* =========================
+   Algemene knoppen
+   ========================= */
+
+button {
+  border-radius: 4px;
+
+  box-shadow: none;
+
+  font-weight: 700;
+}
+
+button:hover:not(:disabled) {
+  box-shadow: none;
+  transform: none;
+}
+
+
+/* Primaire actie */
+
+.responsive-actions > button:first-child,
+.stage-results-actions > button:first-child {
+  background: var(--gtv-dark);
+  border-color: var(--gtv-dark);
+  color: white;
+}
+
+.responsive-actions > button:first-child:hover:not(:disabled),
+.stage-results-actions > button:first-child:hover:not(:disabled) {
+  background: #000;
+  border-color: #000;
+}
+
+
+/* Gevaarlijke actie */
+
+.button-danger {
+  background: var(--gtv-danger);
+  border-color: var(--gtv-danger);
+  color: white;
+}
+
+
+/* =========================
+   Inputs
+   ========================= */
+
+.responsive-input,
+input,
+select,
+textarea {
+  border: 1px solid #c8c6bf;
+  border-radius: 4px;
+
+  background: white;
+}
+
+.responsive-input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--gtv-dark);
+
+  outline: 2px solid rgba(0, 0, 0, 0.08);
+  outline-offset: 0;
+}
+
+
+/* =========================
+   Rennerslijsten
+   ========================= */
+
+.team-list__item,
+.available-cyclists__item {
+  padding: 13px 6px;
+
+  border-bottom:
+    1px solid var(--gtv-border);
+}
+
+.team-list__item:hover,
+.available-cyclists__item:hover {
+  background: var(--gtv-surface-alt);
+}
+
+.team-list__item strong,
+.available-cyclists__item strong {
+  font-weight: 800;
+}
+
+.team-list__item--selected {
+  padding: 12px;
+
+  background: #f5f4ef;
+
+  border:
+    1px solid var(--gtv-border);
+
+  border-left:
+    4px solid var(--gtv-tour);
+
+  border-radius: 3px;
+}
+
+
+/* =========================
+   Tabellen / klassement
+   ========================= */
+
+table {
+  border-collapse: collapse;
+  background: white;
+}
+
+thead {
+  background: var(--gtv-dark);
+  color: white;
+}
+
+thead th {
+  color: white;
+  font-size: 0.78rem;
+
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+tbody tr {
+  border-bottom:
+    1px solid var(--gtv-border);
+}
+
+tbody tr:hover {
+  background: #f6f5f1;
+}
+
+
+/* =========================
+   Countdown
+   ========================= */
+
+.home-countdown {
+  max-width: 540px;
+
+  background: var(--gtv-dark);
+
+  border-radius: 5px;
+
+  box-shadow: none;
+}
+
+.home-countdown__block {
+  border-radius: 3px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+}
+
+.home-countdown__block:nth-child(1) {
+  border-bottom:
+    3px solid var(--gtv-giro);
+}
+
+.home-countdown__block:nth-child(2) {
+  border-bottom:
+    3px solid var(--gtv-tour);
+}
+
+.home-countdown__block:nth-child(3) {
+  border-bottom:
+    3px solid var(--gtv-vuelta);
+}
+
+.home-countdown__block:nth-child(4) {
+  border-bottom:
+    3px solid white;
+}
+
+
+/* =========================
+   Mobiel
+   ========================= */
+
+@media (max-width: 700px) {
+
+  .main-navbar {
+    padding: 10px 14px;
+  }
+
+  .main-navbar__logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .main-navbar__title {
+    font-size: 1rem;
+  }
+
+  .main-navbar__actions {
+    padding-top: 8px;
+  }
+
+  .main-navbar__actions button {
+    width: 100%;
+
+    padding: 11px 6px;
+
+    border-bottom:
+      1px solid rgba(255, 255, 255, 0.12);
+
+    text-align: left;
+  }
+
+  .main-navbar__link--active {
+    border-bottom:
+      2px solid var(--gtv-tour) !important;
+  }
+
+  .responsive-card {
+    border-radius: 4px;
+  }
+
+  .summary-card {
+    border-radius: 4px;
+  }
+}
