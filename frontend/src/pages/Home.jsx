@@ -35,12 +35,8 @@ function Home() {
           >
             <span style={{ color: "#E83E8C" }}>GIRO</span>{" "}
             <span style={{ color: "#FFD700" }}>TOUR</span>{" "}
-            <span style={{ color: "#D62828" }}>VUELTA</span>
-            <br />
-            <span style={{ color: "#FFFFFF" }}>WIELERSPEL</span>
+            <span style={{ color: "#D62828" }}>VUELTA</span>              
           </h1>
-
-          
         </div>
       </section>
       
@@ -51,14 +47,36 @@ function Home() {
           padding: "50px 30px",
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: "clamp(2.2rem, 5vw, 3.5rem)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "16px",
             marginBottom: "10px",
           }}
         >
-          🚴 GiroTourVuelta Wielerspel
-        </h1>
+          <img
+            src="/images/logo.png"
+            alt="GiroTourVuelta logo"
+            style={{
+              width: "70px",
+              height: "70px",
+              objectFit: "contain",
+              flexShrink: 0,
+            }}
+          />
+
+          <h1
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              margin: 0,
+              lineHeight: "1.1",
+            }}
+          >
+            GiroTourVuelta Wielerspel
+          </h1>
+        </div>
 
         <p
           style={{
