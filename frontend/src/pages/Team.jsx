@@ -11,13 +11,11 @@ import {
   saveCompetitionTeamJokers,
 } from "../services/Api";
 
-import CompetitionSelector from "../components/team/CompetitionSelector";
 import TeamList from "../components/team/TeamList";
 import AvailableCyclists from "../components/team/AvailableCyclists";
 import Countdown from "../components/Countdown";
 
 function Team() {
-  const [competitions, setCompetitions] = useState([]);
   const [competitionId, setCompetitionId] = useState("");
 
   const [availableCyclists, setAvailableCyclists] = useState([]);
@@ -58,18 +56,17 @@ function Team() {
     try {
       const data = await getCompetitions();
 
-      setCompetitions(data);
+ 
+      const activeCompetition = data.find(
+        (competition) => competition.isActive
+      );
 
-      if (data.length > 0) {
-        setCompetitionId(data[0].id);
+      if (activeCompetition) {
+        setCompetitionId(activeCompetition.id);
       } else {
+        setCompetitionId("");
         setLoading(false);
       }
-    } catch (error) {
-      console.error(error);
-      setError(error.message);
-      setLoading(false);
-    }
   }
 
   async function loadCompetitionData(
@@ -362,12 +359,7 @@ function Team() {
         />
     )}
 
-      <CompetitionSelector
-        competitions={competitions}
-        competitionId={competitionId}
-        onChange={setCompetitionId}
-      />
-
+ 
       {error && (
         <p
           role="alert"

@@ -5,7 +5,6 @@ import {
   getMyCompetitionTeam,
 } from "../services/Api";
 
-import CompetitionSelector from "../components/team/CompetitionSelector";
 
 const POINTS_BY_POSITION = [
   20,
@@ -26,7 +25,6 @@ const POINTS_BY_POSITION = [
 ];
 
 function Rules() {
-  const [competitions, setCompetitions] = useState([]);
   const [competitionId, setCompetitionId] = useState("");
   const [teamData, setTeamData] = useState(null);
 
@@ -69,26 +67,32 @@ function Rules() {
     }
   }
 
-  async function loadCompetitionRules(
-    selectedCompetitionId
-  ) {
+  async function loadCompetitions() {
     setLoading(true);
     setError("");
 
     try {
-      const data = await getMyCompetitionTeam(
-        selectedCompetitionId
+      const data = await getCompetitions();
+
+      const activeCompetition = data.find(
+        (competition) => competition.isActive
       );
 
-      setTeamData(data);
+      if (activeCompetition) {
+        setCompetitionId(activeCompetition.id);
+      } else {
+        setCompetitionId("");
+        setTeamData(null);
+        setLoading(false);
+      }
     } catch (error) {
       console.error(error);
-      setTeamData(null);
+
       setError(
         error.message ||
-          "De spelregels konden niet worden geladen."
+          "De competitie kon niet worden geladen."
       );
-    } finally {
+
       setLoading(false);
     }
   }
@@ -98,11 +102,6 @@ function Rules() {
 
       <h2>Spelregels</h2>
 
-      <CompetitionSelector
-        competitions={competitions}
-        competitionId={competitionId}
-        onChange={setCompetitionId}
-      />
 
       {error && (
         <p
@@ -120,10 +119,10 @@ function Rules() {
       {loading && <p>Spelregels laden...</p>}
 
       {!loading &&
-        competitions.length === 0 &&
+        !competitionId &&
         !error && (
           <p>
-            Er zijn nog geen competities beschikbaar.
+            Er is momenteel geen actieve competitie.
           </p>
         )}
 
@@ -464,14 +463,16 @@ function Summary({ label, value, icon }) {
 function RuleSection({ title, children }) {
   return (
     <section
-  className="responsive-card"
-  style={{
-    marginBottom: "20px",
-  }}
->
+      className="responsive-card"
+      style={{
+        marginBottom: "20px",
+        textAlign: "left",
+      }}
+    >
       <h3
         style={{
           marginTop: 0,
+          textAlign: "left",
         }}
       >
         {title}

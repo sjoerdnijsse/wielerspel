@@ -6,7 +6,6 @@ import {
   getStandings,
 } from "../services/Api";
 
-import CompetitionSelector from "../components/team/CompetitionSelector";
 import PlayerStandingDetails from "../components/ranking/PlayerStandingDetails";
 
 function Ranking() {
@@ -52,9 +51,14 @@ function Ranking() {
 
       setCompetitions(data);
 
-      if (data.length > 0) {
-        setCompetitionId(data[0].id);
+      const activeCompetition = data.find(
+        (competition) => competition.isActive
+      );
+
+      if (activeCompetition) {
+        setCompetitionId(activeCompetition.id);
       } else {
+        setCompetitionId("");
         setLoading(false);
       }
     } catch (error) {
@@ -144,21 +148,11 @@ function Ranking() {
   }
 
   return (
-    <main
-      style={{
-        padding: "30px",
-        maxWidth: "900px",
-        margin: "0 auto",
-      }}
-    >
+    <main className="page-container">
+      
       <h2>🏆 Klassement</h2>
 
-      <CompetitionSelector
-        competitions={competitions}
-        competitionId={competitionId}
-        onChange={setCompetitionId}
-      />
-
+ 
       {error && (
         <p
           style={{
