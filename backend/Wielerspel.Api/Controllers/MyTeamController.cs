@@ -553,6 +553,19 @@ public class MyTeamController : ControllerBase
             );
         }
 
+        var lastCompletedStageNumber =
+            await _context.Stages
+                .AsNoTracking()
+                .Where(stage =>
+                    stage.CompetitionId == competitionId &&
+                    stage.ResultsPublished
+                )
+                .Select(stage => (int?)stage.StageNumber)
+                .MaxAsync() ?? 0;
+
+        var newCyclistFromStageNumber =
+            lastCompletedStageNumber + 1;
+
         var competitionUser =
             await _context.CompetitionUsers
                 .FirstOrDefaultAsync(x =>
@@ -819,23 +832,83 @@ public class MyTeamController : ControllerBase
 
         try
         {
-            foreach (var transfer in
-                    request.Transfers)
+            foreach (var transfer in request.Transfers)
             {
                 var selection =
                     currentTeamBySelectionId[
-                        transfer
-                            .CompetitionUserCyclistId
+                        transfer.CompetitionUserCyclistId
                     ];
 
-                // Alleen de renner op deze plek
-                // verandert.
+                var oldCompetitionCyclistId =
+                    selection.CompetitionCyclistId;
+
+                // Kijk of voor deze selectieplek al een
+                // actieve historische periode bestaat.
+                var currentHistory =
+                    await _context
+                        .CompetitionUserCyclistHistories
+                        .FirstOrDefaultAsync(history =>
+                            history.CompetitionUserCyclistId ==
+                                selection.Id &&
+                            history.ToStageNumber == null
+                        );
+
+                if (currentHistory == null)
+                {
+                    // Eerste transfer op deze plek.
+                    //
+                    // De oorspronkelijke renner zat vanaf
+                    // etappe 1 op deze plek.
+                    _context
+                        .CompetitionUserCyclistHistories
+                        .Add(
+                            new CompetitionUserCyclistHistory
+                            {
+                                Id = Guid.NewGuid(),
+                                CompetitionUserCyclistId =
+                                    selection.Id,
+                                CompetitionCyclistId =
+                                    oldCompetitionCyclistId,
+                                FromStageNumber = 1,
+                                ToStageNumber =
+                                    newCyclistFromStageNumber - 1
+                            }
+                        );
+                }
+                else
+                {
+                    // Deze plek is al eerder getransfereerd.
+                    // Sluit de huidige periode af.
+                    currentHistory.ToStageNumber =
+                        newCyclistFromStageNumber - 1;
+                }
+
+                // Maak een nieuwe actieve periode voor
+                // de inkomende renner.
+                _context
+                    .CompetitionUserCyclistHistories
+                    .Add(
+                        new CompetitionUserCyclistHistory
+                        {
+                            Id = Guid.NewGuid(),
+                            CompetitionUserCyclistId =
+                                selection.Id,
+                            CompetitionCyclistId =
+                                transfer
+                                    .IncomingCompetitionCyclistId,
+                            FromStageNumber =
+                                newCyclistFromStageNumber,
+                            ToStageNumber = null
+                        }
+                    );
+
+                // CompetitionUserCyclist blijft de actuele
+                // ploeg vertegenwoordigen.
                 //
-                // selection.Id blijft gelijk.
-                // selection.JokerStageId blijft gelijk.
+                // selection.Id blijft gelijk en daardoor
+                // blijft ook JokerStageId op dezelfde plek.
                 selection.CompetitionCyclistId =
-                    transfer
-                        .IncomingCompetitionCyclistId;
+                    transfer.IncomingCompetitionCyclistId;
             }
 
             competitionUser.TransfersUsed +=

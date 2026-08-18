@@ -36,6 +36,10 @@ public class WielerspelDbContext : DbContext
     public DbSet<CompetitionFinalStanding> CompetitionFinalStandings
     => Set<CompetitionFinalStanding>();
 
+    public DbSet<CompetitionUserCyclistHistory>
+    CompetitionUserCyclistHistories
+        => Set<CompetitionUserCyclistHistory>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder
     )
@@ -120,6 +124,18 @@ public class WielerspelDbContext : DbContext
             .HasForeignKey(x => x.WhiteJerseyCompetitionCyclistId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<CompetitionUserCyclistHistory>()
+            .HasOne(x => x.CompetitionUserCyclist)
+            .WithMany()
+            .HasForeignKey(x => x.CompetitionUserCyclistId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompetitionUserCyclistHistory>()
+            .HasOne(x => x.CompetitionCyclist)
+            .WithMany()
+            .HasForeignKey(x => x.CompetitionCyclistId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<StageResult>()
             .HasIndex(x => new
             {
@@ -149,6 +165,14 @@ public class WielerspelDbContext : DbContext
             {
                 x.CompetitionId,
                 x.Position
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<CompetitionUserCyclistHistory>()
+            .HasIndex(x => new
+            {
+                x.CompetitionUserCyclistId,
+                x.FromStageNumber
             })
             .IsUnique();
     }
