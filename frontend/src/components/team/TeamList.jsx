@@ -8,7 +8,7 @@ function TeamList({
   teamLocked,
   transfersUsed,
   maxTransfers,
-  selectedTransferCyclistId,
+  selectedTransferSelectionIds,
   onJokerChange,
   onSaveJokers,
   onRemove,
@@ -37,8 +37,9 @@ function TeamList({
       savingId === cyclist.competitionCyclistId;
 
     const isSelectedForTransfer =
-      selectedTransferCyclistId ===
-      cyclist.competitionCyclistId;
+    selectedTransferSelectionIds?.includes(
+      cyclist.selectionId
+    );
 
     if (isSaving) {
       return teamLocked
@@ -55,8 +56,8 @@ function TeamList({
     }
 
     if (isSelectedForTransfer) {
-      return "Geselecteerd";
-    }
+    return "Annuleren";
+  }
 
     return "Transfer";
   }
@@ -129,8 +130,9 @@ function TeamList({
             teamLocked && transfersRemaining <= 0;
 
           const isSelectedForTransfer =
-            selectedTransferCyclistId ===
-            cyclist.competitionCyclistId;
+            selectedTransferSelectionIds?.includes(
+              cyclist.selectionId
+            );
 
           const currentJokerStageId =
             jokerSelections[cyclist.selectionId] ?? "";
@@ -157,7 +159,7 @@ function TeamList({
 
                 {isSelectedForTransfer && (
                   <div className="team-list__helper">
-                    Kies hieronder een vervangende renner.
+                    Geselecteerd voor transfer.
                   </div>
                 )}
               </div>

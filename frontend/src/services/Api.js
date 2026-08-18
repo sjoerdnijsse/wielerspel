@@ -585,7 +585,8 @@ export async function saveStageResults(
   results,
   yellowJerseyCompetitionCyclistId,
   greenJerseyCompetitionCyclistId,
-  polkaDotJerseyCompetitionCyclistId
+  polkaDotJerseyCompetitionCyclistId,
+  whiteJerseyCompetitionCyclistId
 ) {
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/stages/${stageId}/results`,
@@ -597,6 +598,7 @@ export async function saveStageResults(
         yellowJerseyCompetitionCyclistId,
         greenJerseyCompetitionCyclistId,
         polkaDotJerseyCompetitionCyclistId,
+        whiteJerseyCompetitionCyclistId,
       }),
     }
   );
@@ -725,10 +727,9 @@ export async function getPlayerStandingDetails(
   return response.json();
 }
 
-export async function transferCompetitionCyclist(
+export async function transferCompetitionCyclists(
   competitionId,
-  outgoingCompetitionCyclistId,
-  incomingCompetitionCyclistId
+  transfers
 ) {
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/myteam/transfer`,
@@ -736,8 +737,7 @@ export async function transferCompetitionCyclist(
       method: "POST",
       headers: createHeaders({ hasBody: true }),
       body: JSON.stringify({
-        outgoingCompetitionCyclistId,
-        incomingCompetitionCyclistId,
+        transfers,
       }),
     }
   );
@@ -746,7 +746,7 @@ export async function transferCompetitionCyclist(
     throw new Error(
       await getErrorMessage(
         response,
-        "De transfer kon niet worden uitgevoerd."
+        "Transfers uitvoeren mislukt"
       )
     );
   }

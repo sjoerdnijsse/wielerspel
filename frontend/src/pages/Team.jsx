@@ -7,7 +7,7 @@ import {
   getStages,
   addCyclistToCompetitionTeam,
   removeCyclistFromCompetitionTeam,
-  transferCompetitionCyclist,
+  transferCompetitionCyclists,
   saveCompetitionTeamJokers,
 } from "../services/Api";
 
@@ -32,10 +32,15 @@ function Team() {
   const [firstStageStartTime, setFirstStageStartTime] =
   useState(null);
 
-  const [
-    selectedTransferCyclist,
-    setSelectedTransferCyclist,
-  ] = useState(null);
+ const [
+    selectedTransferSelections,
+    setSelectedTransferSelections,
+  ] = useState([]);
+
+ const [
+    transferAssignments,
+    setTransferAssignments,
+  ] = useState({});
 
   useEffect(() => {
     loadCompetitions();
@@ -43,7 +48,8 @@ function Team() {
 
   useEffect(() => {
     if (competitionId) {
-      setSelectedTransferCyclist(null);
+      setSelectedTransferSelections([]);
+      setTransferAssignments({});
       setSearch("");
       loadCompetitionData(competitionId);
     }
@@ -253,65 +259,147 @@ function Team() {
     }
   }
 
-  function handleTransferStart(cyclist) {
+  function handleTransferSelectionToggle(cyclist) {
     setError("");
     setMessage("");
 
-    if (
-      selectedTransferCyclist?.competitionCyclistId ===
-      cyclist.competitionCyclistId
-    ) {
-      setSelectedTransferCyclist(null);
-      return;
-    }
+    setSelectedTransferSelections((current) => {
+      const alreadySelected = current.some(
+        (item) => item.selectionId === cyclist.selectionId
+      );
 
-    setSelectedTransferCyclist(cyclist);
-    setSearch("");
+      if (alreadySelected) {
+        setTransferAssignments((assignments) => {
+          const updated = { ...assignments };
+          delete updated[cyclist.selectionId];
+          return updated;
+        });
+
+        return current.filter(
+          (item) => item.selectionId !== cyclist.selectionId
+        );
+      }
+
+      const transfersRemaining =
+        teamData?.transfersRemaining ?? 0;
+
+      if (current.length >= transfersRemaining) {
+        setError(
+          `Je kunt nog maximaal ${transfersRemaining} renner(s) vervangen.`
+        );
+        return current;
+      }
+
+      return [...current, cyclist];
+    });
   }
 
-  function handleCancelTransfer() {
-    setSelectedTransferCyclist(null);
+  function handleTransferAssignmentChange(
+    selectionId,
+    incomingCompetitionCyclistId
+  ) {
+    setError("");
+    setMessage("");
+
+    setTransferAssignments((current) => ({
+      ...current,
+      [selectionId]: incomingCompetitionCyclistId,
+    }));
+  }
+
+  function handleCancelTransfers() {
+    setSelectedTransferSelections([]);
+    setTransferAssignments({});
     setSearch("");
     setError("");
   }
 
-  async function handleTransfer(incomingCompetitionCyclistId) {
-    if (!selectedTransferCyclist) {
+async function handleConfirmTransfers() {
+  if (!teamData) {
+    return;
+  }
+
+  if (selectedTransferSelections.length === 0) {
+    setError(
+      "Selecteer eerst minimaal één renner die je wilt vervangen."
+    );
+    return;
+  }
+
+  const missingAssignment =
+    selectedTransferSelections.some(
+      (selection) =>
+        !transferAssignments[selection.selectionId]
+    );
+
+  if (missingAssignment) {
+    setError(
+      "Kies voor iedere vrijgekomen plek een nieuwe renner."
+    );
+    return;
+  }
+
+  const incomingIds =
+      selectedTransferSelections.map(
+        (selection) =>
+          transferAssignments[selection.selectionId]
+      );
+
+    if (new Set(incomingIds).size !== incomingIds.length) {
       setError(
-        "Selecteer eerst de renner die je wilt vervangen."
+        "Dezelfde nieuwe renner kan niet op meerdere plekken worden gekozen."
       );
       return;
     }
 
-    setSavingId(incomingCompetitionCyclistId);
-    setError("");
-    setMessage("");
-
-    try {
-      const result = await transferCompetitionCyclist(
-        competitionId,
-        selectedTransferCyclist.competitionCyclistId,
-        incomingCompetitionCyclistId
-      );
-
-      setMessage(
-        result.message ?? "De transfer is uitgevoerd."
-      );
-
-      setSelectedTransferCyclist(null);
-      setSearch("");
-
-      await loadCompetitionData(
-        competitionId,
-        false
-      );
-    } catch (error) {
-      console.error(error);
-      setError(error.message);
-    } finally {
-      setSavingId(null);
-    }
+    if (transferBudgetRemaining < 0) {
+    setError(
+      `Je overschrijdt je budget met €${Math.abs(
+        transferBudgetRemaining
+      )} miljoen.`
+    );
+    return;
   }
+
+  const transfers = selectedTransferSelections.map(
+    (selection) => ({
+      competitionUserCyclistId: selection.selectionId,
+      incomingCompetitionCyclistId:
+        transferAssignments[selection.selectionId],
+    })
+  );
+
+  setSavingId("transfers");
+  setError("");
+  setMessage("");
+
+  try {
+    const result =
+      await transferCompetitionCyclists(
+        competitionId,
+        transfers
+      );
+
+    setMessage(
+      result.message ??
+        "De transfers zijn uitgevoerd."
+    );
+
+    setSelectedTransferSelections([]);
+    setTransferAssignments({});
+    setSearch("");
+
+    await loadCompetitionData(
+      competitionId,
+      false
+    );
+  } catch (error) {
+    console.error(error);
+    setError(error.message);
+  } finally {
+    setSavingId(null);
+  }
+}
 
   const selectedIds = useMemo(() => {
     return new Set(
@@ -340,16 +428,97 @@ function Team() {
       });
   }, [availableCyclists, selectedIds, search]);
 
-  const transferBudget = useMemo(() => {
-    if (!teamData || !selectedTransferCyclist) {
-      return teamData?.remainingBudget ?? 0;
+  const transferAvailableBudget = useMemo(() => {
+    if (!teamData) {
+      return 0;
     }
+
+    const releasedBudget =
+      selectedTransferSelections.reduce(
+        (total, cyclist) =>
+          total + cyclist.price,
+        0
+      );
 
     return (
       teamData.remainingBudget +
-      selectedTransferCyclist.price
+      releasedBudget
     );
-  }, [teamData, selectedTransferCyclist]);
+  }, [
+    teamData,
+    selectedTransferSelections,
+  ]);
+
+  const transferIncomingTotal = useMemo(() => {
+    return Object.values(
+      transferAssignments
+    ).reduce(
+      (total, cyclistId) => {
+        const cyclist =
+          availableCyclists.find(
+            (item) => item.id === cyclistId
+          );
+
+        return total + (cyclist?.price ?? 0);
+      },
+      0
+    );
+  }, [
+    transferAssignments,
+    availableCyclists,
+  ]);
+
+  const transferBudgetRemaining =
+    transferAvailableBudget -
+    transferIncomingTotal;
+
+  function canAffordIncomingCyclist(
+    cyclist,
+    currentSelectionId
+  ) {
+    const currentAssignedCyclistId =
+      transferAssignments[currentSelectionId];
+
+    const currentAssignedCyclist =
+      availableCyclists.find(
+        (item) =>
+          item.id === currentAssignedCyclistId
+      );
+
+    const currentAssignedPrice =
+      currentAssignedCyclist?.price ?? 0;
+
+    const budgetWithoutCurrentAssignment =
+      transferBudgetRemaining +
+      currentAssignedPrice;
+
+    return cyclist.price <=
+      budgetWithoutCurrentAssignment;
+  }
+
+  function canAffordIncomingCyclist(
+    cyclist,
+    currentSelectionId
+  ) {
+    const currentAssignedCyclistId =
+      transferAssignments[currentSelectionId];
+
+    const currentAssignedCyclist =
+      availableCyclists.find(
+        (item) =>
+          item.id === currentAssignedCyclistId
+      );
+
+    const currentAssignedPrice =
+      currentAssignedCyclist?.price ?? 0;
+
+    const budgetWithoutCurrentAssignment =
+          transferBudgetRemaining +
+          currentAssignedPrice;
+
+        return cyclist.price <=
+          budgetWithoutCurrentAssignment;
+      }  
 
   return (
     <main className="page-container">
@@ -430,53 +599,16 @@ function Team() {
             teamLocked={teamData.teamLocked}
             transfersUsed={teamData.transfersUsed}
             maxTransfers={teamData.maxTransfers}
-            selectedTransferCyclistId={
-              selectedTransferCyclist?.competitionCyclistId ??
-              null
+            selectedTransferSelectionIds={
+              selectedTransferSelections.map(
+                (selection) => selection.selectionId
+              )
             }
             onJokerChange={handleJokerChange}
             onSaveJokers={handleSaveJokers}
             onRemove={handleRemove}
-            onTransfer={handleTransferStart}
+            onTransfer={handleTransferSelectionToggle}
           />
-
-          {teamData.teamLocked &&
-            selectedTransferCyclist && (
-              <section
-                className="responsive-card"
-                style={{
-                  marginBottom: "25px",
-                  borderColor: "#888",
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>
-                  Transfer voorbereiden
-                </h3>
-
-                <p>
-                  Je vervangt{" "}
-                  <strong>
-                    {selectedTransferCyclist.name}
-                  </strong>{" "}
-                  van €{selectedTransferCyclist.price}M.
-                </p>
-
-                <p>
-                  Je mag een vervanger kiezen van maximaal{" "}
-                  <strong>€{transferBudget}M</strong>.
-                </p>
-
-                <div className="responsive-actions">
-                  <button
-                    type="button"
-                    onClick={handleCancelTransfer}
-                    disabled={savingId !== null}
-                  >
-                    Transfer annuleren
-                  </button>
-                </div>
-              </section>
-            )}
 
           {!teamData.teamLocked && (
             <AvailableCyclists
@@ -492,44 +624,238 @@ function Team() {
             />
           )}
 
-          {teamData.teamLocked &&
-            selectedTransferCyclist && (
-              <AvailableCyclists
-                cyclists={filteredAvailableCyclists}
-                search={search}
-                onSearchChange={setSearch}
-                savingId={savingId}
-                remainingBudget={transferBudget}
-                selectedCount={teamData.selectedCount}
-                teamSize={teamData.teamSize}
-                transferMode
-                outgoingCyclistName={
-                  selectedTransferCyclist.name
-                }
-                onTransfer={handleTransfer}
-              />
-            )}
+          {teamData.teamLocked && (
+            <section
+              className="responsive-card"
+              style={{
+                marginTop: "25px",
+                marginBottom: "25px",
+              }}
+            >
+              <h3 style={{ marginTop: 0 }}>
+                Transfers
+              </h3>
 
-          {teamData.teamLocked &&
-            !selectedTransferCyclist && (
-              <section className="responsive-card">
-                <h3>Beschikbare renners</h3>
+              <p>
+                Selecteer in je ploeg één of meer renners die
+                je wilt vervangen. Daarna kies je per
+                vrijgekomen plek een nieuwe renner.
+              </p>
 
-                {teamData.transfersUsed >=
-                teamData.maxTransfers ? (
-                  <p>
-                    Je hebt al je beschikbare transfers
-                    gebruikt.
-                  </p>
-                ) : (
-                  <p>
-                    Klik bij een renner in je ploeg op{" "}
-                    <strong>Transfer</strong> om een
-                    vervanger te kiezen.
-                  </p>
-                )}
-              </section>
-            )}
+              <p>
+                Transfers gebruikt:{" "}
+                <strong>
+                  {teamData.transfersUsed} /{" "}
+                  {teamData.maxTransfers}
+                </strong>
+              </p>
+
+              <div
+                className="responsive-grid"
+                style={{
+                  marginTop: "20px",
+                  marginBottom: "20px",
+                }}
+              >
+                <Summary
+                  icon="💰"
+                  label="Beschikbaar voor transfers"
+                  value={`€${transferAvailableBudget}M`}
+                />
+
+                <Summary
+                  icon="🛒"
+                  label="Nieuwe renners"
+                  value={`€${transferIncomingTotal}M`}
+                />
+
+                <Summary
+                  icon="💶"
+                  label="Budget over"
+                  value={`€${transferBudgetRemaining}M`}
+                />
+              </div>
+
+              {transferBudgetRemaining < 0 && (
+                <p
+                  style={{
+                    color: "#b42318",
+                    fontWeight: "700",
+                  }}
+                >
+                  Je zit €{Math.abs(transferBudgetRemaining)}M
+                  boven je budget.
+                </p>
+              )}
+
+              {selectedTransferSelections.length === 0 && (
+                <p>
+                  Klik bij één of meer renners in je ploeg op{" "}
+                  <strong>Transfer</strong>.
+                </p>
+              )}
+
+              {selectedTransferSelections.length > 0 && (
+                <>
+                  <h4>
+                    Geselecteerd voor transfer (
+                    {selectedTransferSelections.length})
+                  </h4>
+
+                  {selectedTransferSelections.map(
+                    (selection) => {
+                      const currentAssignmentId =
+                        transferAssignments[
+                          selection.selectionId
+                        ] ?? "";
+
+                      const selectedIncomingIds =
+                        Object.values(
+                          transferAssignments
+                        );
+
+                      return (
+                        <div
+                          key={selection.selectionId}
+                          style={{
+                            padding: "15px 0",
+                            borderBottom: "1px solid #ddd",
+                          }}
+                        >
+                          <p
+                            style={{
+                              marginTop: 0,
+                              marginBottom: "6px",
+                            }}
+                          >
+                            <strong>
+                              {selection.name}
+                            </strong>{" "}
+                            — €{selection.price}M
+                          </p>
+
+                          <p
+                            style={{
+                              marginTop: 0,
+                            }}
+                          >
+                            Joker:{" "}
+                            <strong>
+                              {selection.jokerStageNumber
+                                ? `etappe ${selection.jokerStageNumber}`
+                                : "geen joker"}
+                            </strong>
+                          </p>
+
+                          <label>
+                            <span
+                              style={{
+                                display: "block",
+                                marginBottom: "6px",
+                                fontWeight: "600",
+                              }}
+                            >
+                              Nieuwe renner voor deze plek
+                            </span>
+
+                            <select
+                              className="responsive-input"
+                              value={currentAssignmentId}
+                              onChange={(event) =>
+                                handleTransferAssignmentChange(
+                                  selection.selectionId,
+                                  event.target.value
+                                )
+                              }
+                              disabled={
+                                savingId === "transfers"
+                              }
+                            >
+                              <option value="">
+                                Kies een renner
+                              </option>
+
+                              {availableCyclists
+                                .filter(
+                                  (item) =>
+                                    !selectedIds.has(item.id)
+                                )
+                                .map((item) => {
+                                  const selectedElsewhere =
+                                    selectedIncomingIds.includes(
+                                      item.id
+                                    ) &&
+                                    currentAssignmentId !==
+                                      item.id;
+
+                                  const affordable =
+                                    canAffordIncomingCyclist(
+                                      item,
+                                      selection.selectionId
+                                    );
+
+                                  return (
+                                    <option
+                                      key={item.id}
+                                      value={item.id}
+                                      disabled={
+                                        selectedElsewhere ||
+                                        !affordable
+                                      }
+                                    >
+                                      {item.cyclist.name}
+                                      {" · "}
+                                      {item.cyclist.team?.name ??
+                                        "Geen ploeg"}
+                                      {" · €"}
+                                      {item.price}M
+                                      {!affordable
+                                        ? " · te duur"
+                                        : ""}
+                                    </option>
+                                  );
+                                })}
+                            </select>
+                          </label>
+                        </div>
+                      );
+                    }
+                  )}
+
+                  <div
+                    className="responsive-actions"
+                    style={{
+                      marginTop: "20px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={handleConfirmTransfers}
+                      disabled={
+                        savingId === "transfers" ||
+                        transferBudgetRemaining < 0
+                      }
+                    >
+                      {savingId === "transfers"
+                        ? "Transfers uitvoeren..."
+                        : "Transfers bevestigen"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelTransfers}
+                      disabled={
+                        savingId === "transfers"
+                      }
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+
         </>
       )}
     </main>

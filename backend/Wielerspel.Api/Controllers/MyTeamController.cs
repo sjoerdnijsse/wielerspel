@@ -503,31 +503,38 @@ public class MyTeamController : ControllerBase
         });
     }
 
-    // Na de deadline één renner vervangen door een andere renner
+   // Na de deadline één of meer renners
+    // in één keer vervangen.
+    //
+    // Iedere CompetitionUserCyclist blijft bestaan.
+    // Daardoor blijft ook de joker aan dezelfde
+    // selectieplek gekoppeld.
     [HttpPost("transfer")]
-    public async Task<IActionResult> TransferCyclist(
+    public async Task<IActionResult> TransferCyclists(
         Guid competitionId,
-        TransferCyclistRequest request
+        TransferCyclistsRequest request
     )
     {
-        if (
-            request.OutgoingCompetitionCyclistId ==
-            request.IncomingCompetitionCyclistId
-        )
+        if (request.Transfers == null ||
+            request.Transfers.Count == 0)
         {
             return BadRequest(
-                "De nieuwe renner moet verschillen van de renner die je vervangt."
+                "Selecteer minimaal één transfer."
             );
         }
 
         var userId = GetUserId();
 
         var competition = await _context.Competitions
-            .FirstOrDefaultAsync(x => x.Id == competitionId);
+            .FirstOrDefaultAsync(x =>
+                x.Id == competitionId
+            );
 
         if (competition == null)
         {
-            return NotFound("Wedstrijd niet gevonden.");
+            return NotFound(
+                "Wedstrijd niet gevonden."
+            );
         }
 
         if (!IsTransferPeriodOpen(competition))
@@ -537,18 +544,22 @@ public class MyTeamController : ControllerBase
             );
         }
 
-        if (await HasUnpublishedStartedStage(competitionId))
+        if (await HasUnpublishedStartedStage(
+                competitionId
+            ))
         {
             return BadRequest(
                 "Transfers zijn niet toegestaan zolang een gestarte etappe nog niet is gepubliceerd."
             );
         }
 
-        var competitionUser = await _context.CompetitionUsers
-            .FirstOrDefaultAsync(x =>
-                x.CompetitionId == competitionId &&
-                x.UserId == userId
-            );
+        var competitionUser =
+            await _context.CompetitionUsers
+                .FirstOrDefaultAsync(x =>
+                    x.CompetitionId ==
+                        competitionId &&
+                    x.UserId == userId
+                );
 
         if (competitionUser == null)
         {
@@ -557,91 +568,281 @@ public class MyTeamController : ControllerBase
             );
         }
 
-        if (competitionUser.TransfersUsed >= competition.MaxTransfers)
+        // Een transferbatch begint altijd met
+        // een volledige ploeg.
+        var currentTeam =
+            await _context.CompetitionUserCyclists
+                .Where(x =>
+                    x.CompetitionUserId ==
+                    competitionUser.Id
+                )
+                .Include(x =>
+                    x.CompetitionCyclist
+                )
+                    .ThenInclude(x =>
+                        x.Cyclist
+                    )
+                .ToListAsync();
+
+        if (currentTeam.Count != competition.TeamSize)
         {
             return BadRequest(
-                $"Je hebt het maximum van {competition.MaxTransfers} transfers bereikt."
+                $"Je ploeg moet uit precies {competition.TeamSize} renners bestaan voordat je transfers kunt uitvoeren."
             );
         }
 
-        var currentTeam = await _context.CompetitionUserCyclists
-            .Where(x =>
-                x.CompetitionUserId == competitionUser.Id
+        var transferCount =
+            request.Transfers.Count;
+
+        if (
+            competitionUser.TransfersUsed +
+            transferCount >
+            competition.MaxTransfers
+        )
+        {
+            var transfersRemaining = Math.Max(
+                competition.MaxTransfers -
+                competitionUser.TransfersUsed,
+                0
+            );
+
+            return BadRequest(
+                $"Je hebt nog {transfersRemaining} transfer(s) beschikbaar."
+            );
+        }
+
+        // Iedere selectieplek mag binnen één batch
+        // maar één keer worden vervangen.
+        var duplicateSelectionIds =
+            request.Transfers
+                .GroupBy(x =>
+                    x.CompetitionUserCyclistId
+                )
+                .Any(group =>
+                    group.Count() > 1
+                );
+
+        if (duplicateSelectionIds)
+        {
+            return BadRequest(
+                "Dezelfde plek in je ploeg kan niet meerdere keren in één transfer worden gebruikt."
+            );
+        }
+
+        // Dezelfde nieuwe renner mag niet op
+        // meerdere plekken terechtkomen.
+        var duplicateIncomingCyclistIds =
+            request.Transfers
+                .GroupBy(x =>
+                    x.IncomingCompetitionCyclistId
+                )
+                .Any(group =>
+                    group.Count() > 1
+                );
+
+        if (duplicateIncomingCyclistIds)
+        {
+            return BadRequest(
+                "Dezelfde nieuwe renner kan niet meerdere keren worden geselecteerd."
+            );
+        }
+
+        var currentTeamBySelectionId =
+            currentTeam.ToDictionary(
+                selection => selection.Id
+            );
+
+        // Controleer of alle gekozen plekken
+        // daadwerkelijk van deze speler zijn.
+        foreach (var transfer in request.Transfers)
+        {
+            if (!currentTeamBySelectionId.ContainsKey(
+                    transfer.CompetitionUserCyclistId
+                ))
+            {
+                return BadRequest(
+                    "Een of meer gekozen selectieplekken horen niet bij jouw ploeg."
+                );
+            }
+        }
+
+        var incomingCyclistIds =
+            request.Transfers
+                .Select(x =>
+                    x.IncomingCompetitionCyclistId
+                )
+                .ToList();
+
+        var incomingCyclists =
+            await _context.CompetitionCyclists
+                .Where(x =>
+                    x.CompetitionId ==
+                        competitionId &&
+                    incomingCyclistIds.Contains(
+                        x.Id
+                    )
+                )
+                .Include(x => x.Cyclist)
+                .ToListAsync();
+
+        if (
+            incomingCyclists.Count !=
+            incomingCyclistIds.Count
+        )
+        {
+            return BadRequest(
+                "Een of meer nieuwe renners horen niet bij deze wedstrijd."
+            );
+        }
+
+        var incomingCyclistById =
+            incomingCyclists.ToDictionary(
+                cyclist => cyclist.Id
+            );
+
+        var currentCompetitionCyclistIds =
+            currentTeam
+                .Select(x =>
+                    x.CompetitionCyclistId
+                )
+                .ToHashSet();
+
+        // Een renner die al in de huidige ploeg zit,
+        // mag niet opnieuw als nieuwe renner worden
+        // geselecteerd.
+        foreach (var incomingCyclistId in
+                incomingCyclistIds)
+        {
+            if (
+                currentCompetitionCyclistIds.Contains(
+                    incomingCyclistId
+                )
             )
-            .Include(x => x.CompetitionCyclist)
-                .ThenInclude(x => x.Cyclist)
-            .ToListAsync();
-
-        var outgoingSelection = currentTeam
-            .FirstOrDefault(x =>
-                x.CompetitionCyclistId ==
-                request.OutgoingCompetitionCyclistId
-            );
-
-        if (outgoingSelection == null)
-        {
-            return NotFound(
-                "De renner die je wilt vervangen zit niet in je ploeg."
-            );
+            {
+                return BadRequest(
+                    "Een van de gekozen nieuwe renners zit al in je ploeg."
+                );
+            }
         }
 
-        var incomingCyclist = await _context.CompetitionCyclists
-            .Include(x => x.Cyclist)
-            .FirstOrDefaultAsync(x =>
-                x.Id ==
-                    request.IncomingCompetitionCyclistId &&
-                x.CompetitionId == competitionId
-            );
+        // Bouw eerst in het geheugen de volledige
+        // nieuwe ploeg op.
+        var finalCyclistIds =
+            currentTeam
+                .Select(x =>
+                    x.CompetitionCyclistId
+                )
+                .ToList();
 
-        if (incomingCyclist == null)
+        foreach (var transfer in request.Transfers)
         {
-            return NotFound(
-                "De nieuwe renner is niet aan deze wedstrijd gekoppeld."
-            );
+            var selection =
+                currentTeamBySelectionId[
+                    transfer
+                        .CompetitionUserCyclistId
+                ];
+
+            var index =
+                currentTeam.FindIndex(x =>
+                    x.Id == selection.Id
+                );
+
+            finalCyclistIds[index] =
+                transfer
+                    .IncomingCompetitionCyclistId;
         }
 
-        var incomingAlreadySelected = currentTeam.Any(x =>
-            x.CompetitionCyclistId ==
-            request.IncomingCompetitionCyclistId
-        );
-
-        if (incomingAlreadySelected)
+        // Extra veiligheid: na de transfer moeten
+        // exact evenveel unieke renners overblijven
+        // als de voorgeschreven ploegomvang.
+        if (
+            finalCyclistIds.Count !=
+                competition.TeamSize ||
+            finalCyclistIds.Distinct().Count() !=
+                competition.TeamSize
+        )
         {
             return BadRequest(
-                "De nieuwe renner zit al in je ploeg."
+                $"Na de transfers moet je ploeg uit precies {competition.TeamSize} verschillende renners bestaan."
             );
         }
 
-        var currentTotalPrice = currentTeam.Sum(x =>
-            x.CompetitionCyclist.Price
-        );
+        // Bereken de prijs van de HELE nieuwe ploeg.
+        // Hierdoor mogen twee goedkope verkochte
+        // renners samen bijvoorbeeld één dure en
+        // één goedkope nieuwe renner financieren.
+        var finalCyclistPrices =
+            await _context.CompetitionCyclists
+                .AsNoTracking()
+                .Where(x =>
+                    finalCyclistIds.Contains(x.Id)
+                )
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Price
+                })
+                .ToListAsync();
+
+        if (
+            finalCyclistPrices.Count !=
+            competition.TeamSize
+        )
+        {
+            return BadRequest(
+                "De nieuwe ploeg kon niet volledig worden samengesteld."
+            );
+        }
 
         var newTotalPrice =
-            currentTotalPrice -
-            outgoingSelection.CompetitionCyclist.Price +
-            incomingCyclist.Price;
+            finalCyclistPrices.Sum(x =>
+                x.Price
+            );
 
-        if (newTotalPrice > competition.Budget)
+        if (
+            newTotalPrice >
+            competition.Budget
+        )
         {
             var amountOverBudget =
-                newTotalPrice - competition.Budget;
+                newTotalPrice -
+                competition.Budget;
 
             return BadRequest(
-                $"Deze transfer overschrijdt je budget met €{amountOverBudget} miljoen."
+                $"Deze transfers overschrijden je budget met €{amountOverBudget} miljoen."
             );
         }
 
         await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+            await _context.Database
+                .BeginTransactionAsync();
 
         try
         {
-            outgoingSelection.CompetitionCyclistId =
-                incomingCyclist.Id;
+            foreach (var transfer in
+                    request.Transfers)
+            {
+                var selection =
+                    currentTeamBySelectionId[
+                        transfer
+                            .CompetitionUserCyclistId
+                    ];
 
-            competitionUser.TransfersUsed++;
+                // Alleen de renner op deze plek
+                // verandert.
+                //
+                // selection.Id blijft gelijk.
+                // selection.JokerStageId blijft gelijk.
+                selection.CompetitionCyclistId =
+                    transfer
+                        .IncomingCompetitionCyclistId;
+            }
+
+            competitionUser.TransfersUsed +=
+                transferCount;
 
             await _context.SaveChangesAsync();
+
             await transaction.CommitAsync();
         }
         catch
@@ -653,20 +854,25 @@ public class MyTeamController : ControllerBase
         return Ok(new
         {
             message =
-                $"{outgoingSelection.CompetitionCyclist.Cyclist.Name} is vervangen door {incomingCyclist.Cyclist.Name}.",
-            outgoingCompetitionCyclistId =
-                request.OutgoingCompetitionCyclistId,
-            incomingCompetitionCyclistId =
-                request.IncomingCompetitionCyclistId,
-            transfersUsed = competitionUser.TransfersUsed,
+                transferCount == 1
+                    ? "De transfer is uitgevoerd."
+                    : $"{transferCount} transfers zijn uitgevoerd.",
+
+            transfersUsed =
+                competitionUser.TransfersUsed,
+
             transfersRemaining = Math.Max(
                 competition.MaxTransfers -
                 competitionUser.TransfersUsed,
                 0
             ),
-            totalPrice = newTotalPrice,
+
+            totalPrice =
+                newTotalPrice,
+
             remainingBudget =
-                competition.Budget - newTotalPrice
+                competition.Budget -
+                newTotalPrice
         });
     }
 
@@ -779,9 +985,29 @@ public class MyTeamController : ControllerBase
     }
 }
 
-public sealed class TransferCyclistRequest
+public sealed class TransferCyclistsRequest
 {
-    public Guid OutgoingCompetitionCyclistId { get; set; }
+    public List<TransferCyclistItemRequest> Transfers
+    {
+        get;
+        set;
+    } = new();
+}
 
-    public Guid IncomingCompetitionCyclistId { get; set; }
+public sealed class TransferCyclistItemRequest
+{
+    // De vaste plek in de spelersploeg.
+    // Hieraan blijft de joker gekoppeld.
+    public Guid CompetitionUserCyclistId
+    {
+        get;
+        set;
+    }
+
+    // De nieuwe renner die op deze plek komt.
+    public Guid IncomingCompetitionCyclistId
+    {
+        get;
+        set;
+    }
 }
