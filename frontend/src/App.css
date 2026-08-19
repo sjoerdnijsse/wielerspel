@@ -1528,3 +1528,109 @@ tbody tr:hover {
     border-radius: 4px;
   }
 }
+
+/* =========================
+   Etappe-uitslagen mobiel
+   ========================= */
+
+@media (max-width: 700px) {
+  .stage-results-manager__header {
+    margin-bottom: 16px;
+  }
+
+  .stage-results-manager__header p {
+    margin-bottom: 0;
+  }
+
+  .stage-results-stage-card {
+    margin-bottom: 16px;
+  }
+
+  .stage-results-section-heading {
+    margin-bottom: 12px;
+  }
+
+  .stage-results-section-heading p {
+    font-size: 0.9rem;
+    color: var(--gtv-muted);
+  }
+
+  .stage-results-mobile-list {
+    display: block;
+    border-top: 1px solid var(--gtv-border);
+  }
+
+  .stage-result-mobile-row {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 42px;
+    gap: 8px;
+    align-items: center;
+
+    padding: 8px 0;
+
+    border-bottom: 1px solid var(--gtv-border);
+  }
+
+  .stage-result-mobile-position {
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .stage-result-mobile-select {
+    min-width: 0;
+  }
+
+  .stage-result-mobile-select .responsive-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px;
+
+    font-size: 16px;
+  }
+
+  .stage-result-mobile-points {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .stage-result-mobile-points strong {
+    font-size: 0.95rem;
+  }
+
+  .stage-result-mobile-points span {
+    margin-top: 3px;
+
+    color: var(--gtv-muted);
+
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .stage-results-jersey-grid {
+    gap: 10px;
+  }
+
+  .stage-results-jersey-card {
+    padding: 12px;
+    border-radius: 4px;
+  }
+
+  .stage-results-jersey-card__points {
+    margin-top: 2px;
+  }
+
+  .stage-results-actions {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .stage-results-actions button {
+    min-height: 48px;
+  }
+}

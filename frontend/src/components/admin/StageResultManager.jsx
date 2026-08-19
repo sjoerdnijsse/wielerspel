@@ -774,91 +774,71 @@ export default function StageResultManager({ competition }) {
 
             <div className="stage-results-mobile-list">
               {POINTS_BY_POSITION.map(
-                (
-                  points,
-                  positionIndex
-                ) => {
+                (points, positionIndex) => {
                   const selectedCyclistId =
                     selections[positionIndex];
 
                   return (
-                    <article
+                    <div
                       key={positionIndex + 1}
-                      className="stage-result-position-card"
+                      className="stage-result-mobile-row"
                     >
-                      <div className="stage-result-position-card__header">
-                        <div>
-                          <span className="stage-result-position-card__medal">
-                            {getPositionIcon(
-                              positionIndex + 1
-                            )}
-                          </span>
-
-                          <strong>
-                            Positie {positionIndex + 1}
-                          </strong>
-                        </div>
-
-                        <span>
-                          {points} punten
-                        </span>
+                      <div className="stage-result-mobile-position">
+                        {positionIndex + 1}
                       </div>
 
-                      <label
-                        htmlFor={`position-${positionIndex + 1}`}
-                        className="stage-results-field-label"
-                      >
-                        Renner
-                      </label>
-
-                      <select
-                        id={`position-${positionIndex + 1}`}
-                        value={selectedCyclistId}
-                        onChange={(event) =>
-                          handleCyclistChange(
-                            positionIndex,
-                            event.target.value
-                          )
-                        }
-                        disabled={saving}
-                        className="responsive-input"
-                      >
-                        <option value="">
-                          Kies een renner
-                        </option>
-
-                        {cyclists.map(
-                          (
-                            competitionCyclist
-                          ) => {
-                            const isSelectedElsewhere =
-                              selectedCyclistIds.includes(
-                                competitionCyclist.id
-                              ) &&
-                              selectedCyclistId !==
-                                competitionCyclist.id;
-
-                            return (
-                              <option
-                                key={
-                                  competitionCyclist.id
-                                }
-                                value={
-                                  competitionCyclist.id
-                                }
-                                disabled={
-                                  isSelectedElsewhere
-                                }
-                              >
-                                {getCyclistLabel(
-                                  competitionCyclist
-                                )}
-                              </option>
-                            );
+                      <div className="stage-result-mobile-select">
+                        <select
+                          id={`position-${positionIndex + 1}`}
+                          aria-label={`Renner op positie ${
+                            positionIndex + 1
+                          }`}
+                          value={selectedCyclistId}
+                          onChange={(event) =>
+                            handleCyclistChange(
+                              positionIndex,
+                              event.target.value
+                            )
                           }
-                        )}
-                      </select>
-                    </article>
+                          disabled={saving}
+                          className="responsive-input"
+                        >
+                          <option value="">
+                            Kies een renner
+                          </option>
+
+                          {cyclists.map(
+                            (competitionCyclist) => {
+                              const isSelectedElsewhere =
+                                selectedCyclistIds.includes(
+                                  competitionCyclist.id
+                                ) &&
+                                selectedCyclistId !==
+                                  competitionCyclist.id;
+
+                              return (
+                                <option
+                                  key={competitionCyclist.id}
+                                  value={competitionCyclist.id}
+                                  disabled={
+                                    isSelectedElsewhere
+                                  }
+                                >
+                                  {getCyclistLabel(
+                                    competitionCyclist
+                                  )}
+                                </option>
+                              );
+                            }
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="stage-result-mobile-points">
+                        <strong>{points}</strong>
+                        <span>pt</span>
+                      </div>
+                    </div>
                   );
                 }
               )}
