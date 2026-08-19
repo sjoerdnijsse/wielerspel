@@ -107,11 +107,26 @@ export default function StageResultManager({ competition }) {
       );
 
       const sortedCyclists = [...cyclistData].sort(
-        (a, b) =>
-          getCyclistLabel(a).localeCompare(
-            getCyclistLabel(b),
-            "nl"
-          )
+        (a, b) => {
+          const teamA = getCyclistTeamName(a);
+          const teamB = getCyclistTeamName(b);
+
+          const teamComparison = teamA.localeCompare(
+            teamB,
+            "nl",
+            { sensitivity: "base" }
+          );
+
+          if (teamComparison !== 0) {
+            return teamComparison;
+          }
+
+          return getCyclistName(a).localeCompare(
+            getCyclistName(b),
+            "nl",
+            { sensitivity: "base" }
+          );
+        }
       );
 
       setStages(sortedStages);
@@ -229,6 +244,11 @@ export default function StageResultManager({ competition }) {
     );
   }, [stages, selectedStageId]);
 
+  const cyclistGroups = useMemo(
+    () => getCyclistsByTeam(cyclists),
+    [cyclists]
+  );
+
   function getCyclistName(competitionCyclist) {
     return (
       competitionCyclist.cyclist?.name ||
@@ -279,6 +299,41 @@ export default function StageResultManager({ competition }) {
 
     return `${numberPart}${name}${teamPart}`;
   }
+
+  function getCyclistsByTeam(cyclists) {
+  const groups = {};
+
+  cyclists.forEach((competitionCyclist) => {
+    const teamName =
+      getCyclistTeamName(competitionCyclist) ||
+      "Geen ploeg";
+
+    if (!groups[teamName]) {
+      groups[teamName] = [];
+    }
+
+    groups[teamName].push(competitionCyclist);
+  });
+
+  return Object.entries(groups)
+    .sort(([teamA], [teamB]) =>
+      teamA.localeCompare(teamB, "nl", {
+        sensitivity: "base",
+      })
+    )
+    .map(([teamName, teamCyclists]) => ({
+      teamName,
+      cyclists: teamCyclists.sort((a, b) =>
+        getCyclistName(a).localeCompare(
+          getCyclistName(b),
+          "nl",
+          {
+            sensitivity: "base",
+          }
+        )
+      ),
+    }));
+}
 
   function validateResults() {
     const filledSelections =
@@ -727,36 +782,35 @@ export default function StageResultManager({ competition }) {
                                   Kies een renner
                                 </option>
 
-                                {cyclists.map(
-                                  (
-                                    competitionCyclist
-                                  ) => {
-                                    const isSelectedElsewhere =
-                                      selectedCyclistIds.includes(
-                                        competitionCyclist.id
-                                      ) &&
-                                      selectedCyclistId !==
-                                        competitionCyclist.id;
+                                {cyclistGroups.map((group) => (
+                                  <optgroup
+                                    key={group.teamName}
+                                    label={group.teamName}
+                                  >
+                                    {group.cyclists.map(
+                                      (competitionCyclist) => {
+                                        const isSelectedElsewhere =
+                                          selectedCyclistIds.includes(
+                                            competitionCyclist.id
+                                          ) &&
+                                          selectedCyclistId !==
+                                            competitionCyclist.id;
 
-                                    return (
-                                      <option
-                                        key={
-                                          competitionCyclist.id
-                                        }
-                                        value={
-                                          competitionCyclist.id
-                                        }
-                                        disabled={
-                                          isSelectedElsewhere
-                                        }
-                                      >
-                                        {getCyclistLabel(
-                                          competitionCyclist
-                                        )}
-                                      </option>
-                                    );
-                                  }
-                                )}
+                                        return (
+                                          <option
+                                            key={competitionCyclist.id}
+                                            value={competitionCyclist.id}
+                                            disabled={isSelectedElsewhere}
+                                          >
+                                            {getCyclistName(
+                                              competitionCyclist
+                                            )}
+                                          </option>
+                                        );
+                                      }
+                                    )}
+                                  </optgroup>
+                                ))}
                               </select>
                             </td>
 
@@ -807,30 +861,35 @@ export default function StageResultManager({ competition }) {
                             Kies een renner
                           </option>
 
-                          {cyclists.map(
-                            (competitionCyclist) => {
-                              const isSelectedElsewhere =
-                                selectedCyclistIds.includes(
-                                  competitionCyclist.id
-                                ) &&
-                                selectedCyclistId !==
-                                  competitionCyclist.id;
+                          {cyclistGroups.map((group) => (
+                            <optgroup
+                              key={group.teamName}
+                              label={group.teamName}
+                            >
+                              {group.cyclists.map(
+                                (competitionCyclist) => {
+                                  const isSelectedElsewhere =
+                                    selectedCyclistIds.includes(
+                                      competitionCyclist.id
+                                    ) &&
+                                    selectedCyclistId !==
+                                      competitionCyclist.id;
 
-                              return (
-                                <option
-                                  key={competitionCyclist.id}
-                                  value={competitionCyclist.id}
-                                  disabled={
-                                    isSelectedElsewhere
-                                  }
-                                >
-                                  {getCyclistLabel(
-                                    competitionCyclist
-                                  )}
-                                </option>
-                              );
-                            }
-                          )}
+                                  return (
+                                    <option
+                                      key={competitionCyclist.id}
+                                      value={competitionCyclist.id}
+                                      disabled={isSelectedElsewhere}
+                                    >
+                                      {getCyclistName(
+                                        competitionCyclist
+                                      )}
+                                    </option>
+                                  );
+                                }
+                              )}
+                            </optgroup>
+                          ))}
                         </select>
                       </div>
 
@@ -875,8 +934,8 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
-                cyclists={cyclists}
-                getCyclistLabel={getCyclistLabel}
+                cyclistGroups={cyclistGroups}
+                getCyclistName={getCyclistName}
                 disabled={saving}
               />
 
@@ -893,8 +952,8 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
-                cyclists={cyclists}
-                getCyclistLabel={getCyclistLabel}
+                cyclistGroups={cyclistGroups}
+                getCyclistName={getCyclistName}
                 disabled={saving}
               />
 
@@ -911,8 +970,8 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
-                cyclists={cyclists}
-                getCyclistLabel={getCyclistLabel}
+                cyclistGroups={cyclistGroups}
+                getCyclistName={getCyclistName}
                 disabled={saving}
               />
 
@@ -929,8 +988,8 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
-                cyclists={cyclists}
-                getCyclistLabel={getCyclistLabel}
+                cyclistGroups={cyclistGroups}
+                getCyclistName={getCyclistName}
                 disabled={saving}
               />
             </div>
@@ -1001,8 +1060,8 @@ function JerseyField({
   points,
   value,
   onChange,
-  cyclists,
-  getCyclistLabel,
+  cyclistGroups,
+  getCyclistName,
   disabled,
 }) {
   return (
@@ -1029,18 +1088,25 @@ function JerseyField({
           Kies een renner
         </option>
 
-        {cyclists.map(
-          (competitionCyclist) => (
-            <option
-              key={competitionCyclist.id}
-              value={competitionCyclist.id}
-            >
-              {getCyclistLabel(
-                competitionCyclist
-              )}
-            </option>
-          )
-        )}
+        {cyclistGroups.map((group) => (
+          <optgroup
+            key={group.teamName}
+            label={group.teamName}
+          >
+            {group.cyclists.map(
+              (competitionCyclist) => (
+                <option
+                  key={competitionCyclist.id}
+                  value={competitionCyclist.id}
+                >
+                  {getCyclistName(
+                    competitionCyclist
+                  )}
+                </option>
+              )
+            )}
+          </optgroup>
+        ))}
       </select>
     </div>
   );
