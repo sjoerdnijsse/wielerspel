@@ -37,9 +37,9 @@ function TeamList({
       savingId === cyclist.competitionCyclistId;
 
     const isSelectedForTransfer =
-    selectedTransferSelectionIds?.includes(
-      cyclist.selectionId
-    );
+      selectedTransferSelectionIds?.includes(
+        cyclist.selectionId
+      );
 
     if (isSaving) {
       return teamLocked
@@ -56,15 +56,43 @@ function TeamList({
     }
 
     if (isSelectedForTransfer) {
-    return "Annuleren";
-  }
+      return "Annuleren";
+    }
 
     return "Transfer";
   }
 
+  function getStageTypeLabel(type) {
+    switch (type) {
+      case 0:
+        return "Vlak";
+
+      case 1:
+        return "Heuvelachtig";
+
+      case 2:
+        return "Berg";
+
+      case 3:
+        return "Tijdrit";
+
+      default:
+        return "Onbekend";
+    }
+  }
+
   function getJokerLabel(cyclist) {
+    const stage = stages.find(
+      (item) =>
+        item.stageNumber === cyclist.jokerStageNumber
+    );
+
     if (cyclist.jokerStageNumber) {
-      return `Etappe ${cyclist.jokerStageNumber}`;
+      return stage
+        ? `Etappe ${cyclist.jokerStageNumber} (${getStageTypeLabel(
+            stage.type
+          )})`
+        : `Etappe ${cyclist.jokerStageNumber}`;
     }
 
     const selectedStageId =
@@ -75,7 +103,9 @@ function TeamList({
     );
 
     return selectedStage
-      ? `Etappe ${selectedStage.stageNumber}`
+      ? `Etappe ${selectedStage.stageNumber} (${getStageTypeLabel(
+          selectedStage.type
+        )})`
       : "Niet ingesteld";
   }
 
@@ -198,11 +228,10 @@ function TeamList({
                             <option
                               key={stage.id}
                               value={stage.id}
-                              disabled={
-                                usedByAnotherCyclist
-                              }
+                              disabled={usedByAnotherCyclist}
                             >
-                              Etappe {stage.stageNumber}
+                              Etappe {stage.stageNumber} (
+                              {getStageTypeLabel(stage.type)})
                             </option>
                           );
                         })}

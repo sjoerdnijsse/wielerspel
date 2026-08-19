@@ -137,25 +137,22 @@ async function loadCompetitionRules(
             }}
           >
             <Summary
-              icon="👥"
               label="Aantal renners"
               value={teamData.teamSize}
             />
 
             <Summary
-              icon="💰"
               label="Budget"
               value={`€${teamData.budget}M`}
             />
 
             <Summary
-              icon="🔄"
               label="Transfers"
               value={teamData.maxTransfers}
             />
           </section>
 
-          <RuleSection title="🚴 Ploeg samenstellen">
+          <RuleSection title="Ploeg samenstellen">
             <p>
               Je stelt voor deze competitie een ploeg
               samen van{" "}
@@ -180,7 +177,7 @@ async function loadCompetitionRules(
             </p>
           </RuleSection>
 
-          <RuleSection title="🃏 Jokers">
+          <RuleSection title="Jokers">
             <p>
               Zodra je ploeg compleet is, geef je iedere
               renner één jokeretappe. 
@@ -274,7 +271,7 @@ async function loadCompetitionRules(
             </div>
           </RuleSection>
 
-          <RuleSection title="🔄 Transfers">
+          <RuleSection title="Transfers">
             <p>
               Tijdens de competitie kun je maximaal{" "}
               <strong>
@@ -284,30 +281,42 @@ async function loadCompetitionRules(
             </p>
 
             <p>
-              Bij een transfer vervang je één renner uit
-              je ploeg door een andere beschikbare
-              renner. De nieuwe renner moet binnen je
-              beschikbare budget passen.
+              Je kunt één of meerdere renners tegelijk
+              vervangen. Het budget dat vrijkomt door de
+              geselecteerde renners wordt opgeteld bij je
+              resterende budget en mag gezamenlijk worden
+              gebruikt voor de nieuwe renners.
+            </p>
+
+            <p>
+              Voor iedere renner die je vervangt, gebruik je
+              één transfer. Na het uitvoeren van de transfers
+              bestaat je ploeg opnieuw uit{" "}
+              <strong>{teamData.teamSize} renners</strong>.
+            </p>
+
+            <p>
+              De joker blijft gekoppeld aan dezelfde plek in
+              je ploeg. Bij meerdere transfers bepaal je zelf
+              welke nieuwe renner op welke plek komt en dus
+              welke joker overneemt.
             </p>
 
             <p>
               Transfers zijn niet mogelijk wanneer een
-              etappe al is gestart en de uitslag daarvan
-              nog niet is gepubliceerd.
+              etappe al is gestart en de uitslag daarvan nog
+              niet is gepubliceerd.
             </p>
 
             <p>
-              Je behaalt alleen punten met de renners die{" "}
-              <strong>
-                op het moment van de etappe in jouw ploeg
-                zitten
-              </strong>
-              . Transfers hebben daarom alleen invloed op
-              toekomstige etappes.
+              Punten die een vervangen renner eerder voor jouw
+              ploeg heeft behaald, blijven behouden. De nieuwe
+              renner scoort vanaf de eerstvolgende etappe voor
+              jouw ploeg.
             </p>
           </RuleSection>
 
-          <RuleSection title="🏁 Punten per etappe">
+          <RuleSection title="Punten per etappe">
             <p>
               Na iedere etappe ontvangen de
               eerste 15 renners punten volgens
@@ -347,7 +356,7 @@ async function loadCompetitionRules(
             </div>
           </RuleSection>
 
-          <RuleSection title="👕 Bonuspunten voor truien">
+          <RuleSection title="Bonuspunten voor truien">
             <p>
               Na iedere etappe ontvangen de
               dragers van de klassementstruien extra
@@ -374,28 +383,28 @@ async function loadCompetitionRules(
 
                 <tbody>
                   <tr>
-                    <TableCell>🟡 Leiderstrui</TableCell>
+                    <TableCell>Leiderstrui</TableCell>
                     <TableCell>
                       <strong>10</strong>
                     </TableCell>
                   </tr>
 
                   <tr>
-                    <TableCell>🟢 Puntentrui</TableCell>
+                    <TableCell>Puntentrui</TableCell>
                     <TableCell>
                       <strong>5</strong>
                     </TableCell>
                   </tr>
 
                   <tr>
-                    <TableCell>🔴 Bergtrui</TableCell>
+                    <TableCell>Bergtrui</TableCell>
                     <TableCell>
                       <strong>5</strong>
                     </TableCell>
                   </tr>
 
                   <tr>
-                    <TableCell>⚪ Witte trui</TableCell>
+                    <TableCell>Jongerentrui</TableCell>
                     <TableCell>
                       <strong>5</strong>
                     </TableCell>
@@ -406,7 +415,7 @@ async function loadCompetitionRules(
             </div>
           </RuleSection>
 
-          <RuleSection title="📊 Klassement">
+          <RuleSection title="Klassement">
             <p>
               Alle etappepunten, jokerbonussen en
               truienbonussen van de renners in jouw ploeg
@@ -414,16 +423,13 @@ async function loadCompetitionRules(
             </p>
 
             <p>
-              Alleen de{" "}
-              <strong>
-                punten uit etapperesultaten
-              </strong>{" "}
-              tellen mee voor het klassement.
+              Alleen punten uit gepubliceerde etappes tellen
+              mee voor het klassement.
             </p>
 
             <p>
               Er worden geen aparte punten toegekend voor
-              het eindklassement van de wielerwedstrijd.
+              de eindklassementen van de wielerwedstrijd.
             </p>
 
             <p>
@@ -437,22 +443,44 @@ async function loadCompetitionRules(
   );
 }
 
-function Summary({ label, value, icon }) {
+function Summary({ label, value }) {
   return (
-    <div className="summary-card">
-      <span className="summary-card__label">
-        {icon && (
-          <span
-            className="summary-card__icon"
-            aria-hidden="true"
-          >
-            {icon}
-          </span>
-        )}
+    <div
+      className="responsive-card"
+      style={{
+        textAlign: "left",
+        padding: "22px",
+      }}
+    >
+      <div
+        style={{
+          width: "38px",
+          height: "3px",
+          background: "#D62828",
+          marginBottom: "16px",
+        }}
+      />
+
+      <span
+        style={{
+          display: "block",
+          color: "#666",
+          fontSize: "0.85rem",
+          fontWeight: "700",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          marginBottom: "6px",
+        }}
+      >
         {label}
       </span>
 
-      <strong className="summary-card__value">
+      <strong
+        style={{
+          display: "block",
+          fontSize: "1.6rem",
+        }}
+      >
         {value}
       </strong>
     </div>
@@ -464,14 +492,25 @@ function RuleSection({ title, children }) {
     <section
       className="responsive-card"
       style={{
-        marginBottom: "20px",
+        marginBottom: "24px",
+        padding: "28px",
         textAlign: "left",
       }}
     >
+      <div
+        style={{
+          width: "42px",
+          height: "3px",
+          background: "#D62828",
+          marginBottom: "16px",
+        }}
+      />
+
       <h3
         style={{
           marginTop: 0,
-          textAlign: "left",
+          marginBottom: "20px",
+          fontSize: "1.4rem",
         }}
       >
         {title}
