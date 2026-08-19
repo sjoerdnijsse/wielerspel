@@ -435,22 +435,37 @@ text-align:left;
 padding:10px;
 }
 
-@media (max-width:900px){
-.competition-dashboard-layout{
-grid-template-columns:1fr;
-}
-.competition-dashboard-tabs{
-flex-direction:row;
-overflow-x:auto;
-padding-bottom:6px;
-}
-.competition-dashboard-tabs button{
-white-space:nowrap;
-flex:0 0 auto;
-}
+.competition-dashboard-mobile-nav {
+  display: none;
 }
 
+@media (max-width: 900px) {
+  .competition-dashboard-desktop-nav {
+    display: none;
+  }
 
+  .competition-dashboard-mobile-nav {
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  .competition-dashboard-mobile-nav label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .competition-dashboard-mobile-nav select {
+    width: 100%;
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .competition-dashboard-layout {
+    display: block;
+  }
+}
 
 .cyclist-manager-layout{
 display:grid;

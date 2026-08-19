@@ -137,10 +137,34 @@ function CompetitionDashboard({
         </p>
       </header>
 
+      <div className="competition-dashboard-mobile-nav">
+        <label htmlFor="competition-dashboard-section">
+          Onderdeel
+        </label>
+
+        <select
+          id="competition-dashboard-section"
+          value={activeTab}
+          onChange={(event) =>
+            setActiveTab(event.target.value)
+          }
+          className="responsive-input"
+        >
+          {tabs.map((tab) => (
+            <option
+              key={tab.id}
+              value={tab.id}
+            >
+              {tab.title}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="competition-dashboard-layout">
         <nav
           aria-label="Wedstrijdbeheer"
-          className="responsive-card"
+          className="responsive-card competition-dashboard-desktop-nav"
         >
           <strong>Onderdelen</strong>
 

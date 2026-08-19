@@ -139,7 +139,7 @@ function Home() {
             marginBottom: "12px",
           }}
         >
-          Speel, strategiseer en win
+          Gebruik je wielerkennis, hoop op een beetje geluk en win!
         </h2>
 
         <p
