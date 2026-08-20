@@ -12,6 +12,7 @@ import Rules from "./pages/Rules";
 import HallOfFame from "./pages/HallOfFame";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
 
 import "./App.css";
 
@@ -36,6 +37,7 @@ function App() {
         {page === "resetPassword" && <ResetPassword setPage={setPage} />}
         {page === "register" && <Register />}
         {page === "team" && <Team />}
+        {page === "profile" && <Profile />}
         {page === "ranking" && <Ranking />}
         {page === "hallOfFame" && <HallOfFame />}
         {page === "rules" && <Rules />}

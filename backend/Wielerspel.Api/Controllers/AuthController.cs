@@ -81,6 +81,18 @@ public class AuthController : ControllerBase
             );
         }
 
+        var existingName = await _context.Users
+            .AnyAsync(user =>
+                user.Name.ToLower() == name.ToLower()
+            );
+
+        if (existingName)
+        {
+            return BadRequest(
+                "Deze naam is al in gebruik. Kies een andere naam."
+            );
+        }
+
         var initialModeratorEmail =
                 _configuration["InitialModeratorEmail"]?
                     .Trim()
@@ -448,6 +460,170 @@ public class AuthController : ControllerBase
         });
     }
 
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(user => user.Id == userId.Value);
+
+        if (user == null)
+        {
+            return NotFound("Gebruiker niet gevonden.");
+        }
+
+        return Ok(new ProfileResponse
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email
+        });
+    }
+    [HttpPut("profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile(
+        UpdateProfileRequest request
+    )
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var name = request.Name.Trim();
+        var email = NormalizeEmail(request.Email);
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return BadRequest("Naam is verplicht.");
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest("E-mailadres is verplicht.");
+        }
+
+        var emailInUse = await _context.Users
+            .AnyAsync(user =>
+                user.Id != userId.Value &&
+                user.Email.ToLower() == email
+            );
+
+        if (emailInUse)
+        {
+            return BadRequest(
+                "Dit e-mailadres is al in gebruik."
+            );
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(user =>
+                user.Id == userId.Value
+            );
+
+        if (user == null)
+        {
+            return NotFound("Gebruiker niet gevonden.");
+        }
+
+        var nameInUse = await _context.Users
+            .AnyAsync(user =>
+                user.Id != userId.Value &&
+                user.Name.ToLower() == name.ToLower()
+            );
+
+        if (nameInUse)
+        {
+            return BadRequest(
+                "Deze naam is al in gebruik. Kies een andere naam."
+            );
+        }
+        
+        user.Name = name;
+        user.Email = email;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new ProfileResponse
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email
+        });
+    }
+    [HttpPut("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordRequest request
+    )
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+        {
+            return BadRequest(
+                "Vul je huidige wachtwoord in."
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword) ||
+            request.NewPassword.Length < 8)
+        {
+            return BadRequest(
+                "Het nieuwe wachtwoord moet minimaal 8 tekens bevatten."
+            );
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(user =>
+                user.Id == userId.Value
+            );
+
+        if (user == null)
+        {
+            return NotFound("Gebruiker niet gevonden.");
+        }
+
+        var passwordValid =
+            BCrypt.Net.BCrypt.Verify(
+                request.CurrentPassword,
+                user.PasswordHash
+            );
+
+        if (!passwordValid)
+        {
+            return BadRequest(
+                "Het huidige wachtwoord is niet correct."
+            );
+        }
+
+        user.PasswordHash =
+            BCrypt.Net.BCrypt.HashPassword(
+                request.NewPassword
+            );
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Je wachtwoord is gewijzigd."
+        });
+    }
     [HttpPut("make-moderator/{email}")]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> MakeModerator(
@@ -483,6 +659,18 @@ public class AuthController : ControllerBase
         });
     }
 
+    private Guid? GetCurrentUserId()
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                JwtRegisteredClaimNames.Sub
+            );
+
+        return Guid.TryParse(userIdValue, out var userId)
+            ? userId
+            : null;
+    }
+    
     private static string NormalizeEmail(
         string? email
     )

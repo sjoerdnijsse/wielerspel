@@ -904,3 +904,79 @@ export async function resetPassword({
 
   return response.json();
 }
+
+export async function getProfile() {
+  const response = await fetch(
+    `${API_URL}/auth/profile`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Profiel ophalen mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function updateProfile(
+  name,
+  email
+) {
+  const response = await fetch(
+    `${API_URL}/auth/profile`,
+    {
+      method: "PUT",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        name,
+        email,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Profiel bijwerken mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
+export async function changePassword(
+  currentPassword,
+  newPassword
+) {
+  const response = await fetch(
+    `${API_URL}/auth/change-password`,
+    {
+      method: "PUT",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Wachtwoord wijzigen mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}

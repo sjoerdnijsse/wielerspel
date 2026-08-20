@@ -138,6 +138,14 @@ export default function Navbar({
 
             <button
               type="button"
+              className={getButtonClass("profile")}
+              onClick={() => openPage("profile")}
+            >
+              Mijn profiel
+            </button>
+
+            <button
+              type="button"
               className={getButtonClass("ranking")}
               onClick={() => openPage("ranking")}
             >
