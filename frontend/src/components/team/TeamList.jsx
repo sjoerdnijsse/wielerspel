@@ -137,6 +137,7 @@ function TeamList({
         <p>
           Kies voor iedere renner één jokeretappe. Iedere
           etappe mag maar één keer worden gebruikt.
+          Vergeet de jokers niet op te slaan als je alles hebt ingevuld.
         </p>
       )}
 

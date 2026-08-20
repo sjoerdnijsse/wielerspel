@@ -15,4 +15,6 @@ public class PlayerTeamCyclistDto
     public int Number { get; set; }
 
     public int Price { get; set; }
+
+    public int? JokerStageNumber { get; set; }
 }

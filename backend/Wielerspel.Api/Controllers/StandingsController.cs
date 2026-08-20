@@ -540,63 +540,76 @@ public class StandingsController : ControllerBase
             );
 
         var cyclists =
-            new List<PlayerTeamCyclistDto>();
+                new List<PlayerTeamCyclistDto>();
 
-        if (teamVisible)
-        {
-            cyclists =
-                await _context
-                    .CompetitionUserCyclists
-                    .AsNoTracking()
-                    .Where(selection =>
-                        selection.CompetitionUserId ==
-                        competitionUser
-                            .CompetitionUserId
-                    )
-                    .Select(selection =>
-                        new PlayerTeamCyclistDto
-                        {
-                            CompetitionCyclistId =
-                                selection
-                                    .CompetitionCyclistId,
+            if (teamVisible)
+            {
+                cyclists =
+                    await _context
+                        .CompetitionUserCyclists
+                        .AsNoTracking()
+                        .Where(selection =>
+                            selection.CompetitionUserId ==
+                            competitionUser
+                                .CompetitionUserId
+                        )
+                        .Select(selection =>
+                            new PlayerTeamCyclistDto
+                            {
+                                CompetitionCyclistId =
+                                    selection
+                                        .CompetitionCyclistId,
 
-                            CyclistId =
-                                selection
-                                    .CompetitionCyclist
-                                    .CyclistId,
+                                CyclistId =
+                                    selection
+                                        .CompetitionCyclist
+                                        .CyclistId,
 
-                            CyclistName =
-                                selection
-                                    .CompetitionCyclist
-                                    .Cyclist
-                                    .Name,
-
-                            TeamId =
-                                selection
-                                    .CompetitionCyclist
-                                    .Cyclist
-                                    .TeamId,
-
-                            TeamName =
-                                selection
+                                CyclistName =
+                                    selection
                                         .CompetitionCyclist
                                         .Cyclist
-                                        .Team != null
-                                    ? selection
+                                        .Name,
+
+                                TeamId =
+                                    selection
                                         .CompetitionCyclist
                                         .Cyclist
-                                        .Team!
-                                        .Name
-                                    : string.Empty,
+                                        .TeamId,
 
-                            Price =
-                                selection
-                                    .CompetitionCyclist
-                                    .Price
-                        }
-                    )
-                    .ToListAsync();
-        }
+                                TeamName =
+                                    selection
+                                            .CompetitionCyclist
+                                            .Cyclist
+                                            .Team != null
+                                        ? selection
+                                            .CompetitionCyclist
+                                            .Cyclist
+                                            .Team!
+                                            .Name
+                                        : string.Empty,
+
+                                Price =
+                                    selection
+                                        .CompetitionCyclist
+                                        .Price,
+
+                                JokerStageNumber =
+                                    selection.JokerStageId.HasValue
+                                        ? _context.Stages
+                                            .Where(stage =>
+                                                stage.Id ==
+                                                selection.JokerStageId.Value
+                                            )
+                                            .Select(stage =>
+                                                (int?)stage.StageNumber
+                                            )
+                                            .FirstOrDefault()
+                                        : null
+                            }
+                        )
+                        .ToListAsync();
+            }
 
         var result =
             new PlayerStandingDetailDto

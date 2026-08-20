@@ -79,13 +79,20 @@ function PlayerStandingDetails({
         }}
       >
         <div>
-          <h3 style={{ marginTop: 0, marginBottom: "6px" }}>
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: "6px",
+            }}
+          >
             {playerDetails.userName}
           </h3>
 
           <p style={{ margin: 0 }}>
             Totaalscore:{" "}
-            <strong>{playerDetails.totalPoints}</strong>
+            <strong>
+              {playerDetails.totalPoints}
+            </strong>
           </p>
         </div>
 
@@ -118,7 +125,8 @@ function PlayerStandingDetails({
                     style={{
                       padding: "10px",
                       textAlign: "left",
-                      borderBottom: "2px solid #ccc",
+                      borderBottom:
+                        "2px solid #ccc",
                     }}
                   >
                     Etappe
@@ -128,7 +136,8 @@ function PlayerStandingDetails({
                     style={{
                       padding: "10px",
                       textAlign: "right",
-                      borderBottom: "2px solid #ccc",
+                      borderBottom:
+                        "2px solid #ccc",
                     }}
                   >
                     Punten
@@ -147,7 +156,8 @@ function PlayerStandingDetails({
                             "1px solid #eee",
                         }}
                       >
-                        Etappe {stagePoint.stageNumber}
+                        Etappe{" "}
+                        {stagePoint.stageNumber}
                       </td>
 
                       <td
@@ -187,7 +197,10 @@ function PlayerStandingDetails({
 
         {playerDetails.teamVisible &&
           playerDetails.cyclists?.length === 0 && (
-            <p>Deze speler heeft geen renners in het team.</p>
+            <p>
+              Deze speler heeft geen renners in het
+              team.
+            </p>
           )}
 
         {playerDetails.teamVisible &&
@@ -232,6 +245,17 @@ function PlayerStandingDetails({
                       }}
                     >
                       Ploeg
+                    </th>
+
+                    <th
+                      style={{
+                        padding: "10px",
+                        textAlign: "left",
+                        borderBottom:
+                          "2px solid #ccc",
+                      }}
+                    >
+                      Joker
                     </th>
 
                     <th
@@ -288,12 +312,24 @@ function PlayerStandingDetails({
                         <td
                           style={{
                             padding: "10px",
+                            borderBottom:
+                              "1px solid #eee",
+                          }}
+                        >
+                          {cyclist.jokerStageNumber
+                            ? `Etappe ${cyclist.jokerStageNumber}`
+                            : "-"}
+                        </td>
+
+                        <td
+                          style={{
+                            padding: "10px",
                             textAlign: "right",
                             borderBottom:
                               "1px solid #eee",
                           }}
                         >
-                          {cyclist.price}
+                          €{cyclist.price}M
                         </td>
                       </tr>
                     )
