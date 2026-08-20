@@ -19,18 +19,22 @@ function Profile() {
   });
 
   const [loading, setLoading] = useState(true);
+
   const [savingProfile, setSavingProfile] =
     useState(false);
+
   const [savingPassword, setSavingPassword] =
     useState(false);
 
   const [profileError, setProfileError] =
     useState("");
+
   const [profileMessage, setProfileMessage] =
     useState("");
 
   const [passwordError, setPasswordError] =
     useState("");
+
   const [passwordMessage, setPasswordMessage] =
     useState("");
 
@@ -50,10 +54,8 @@ function Profile() {
         email: data.email ?? "",
       });
     } catch (error) {
-      console.error(error);
-
       setProfileError(
-        error.message ||
+        error?.message ||
           "Je profiel kon niet worden geladen."
       );
     } finally {
@@ -88,24 +90,28 @@ function Profile() {
   async function handleProfileSubmit(event) {
     event.preventDefault();
 
-    if (!profile.name.trim()) {
+    const name = profile.name.trim();
+    const email = profile.email.trim();
+
+    setProfileError("");
+    setProfileMessage("");
+
+    if (!name) {
       setProfileError("Naam is verplicht.");
       return;
     }
 
-    if (!profile.email.trim()) {
+    if (!email) {
       setProfileError("E-mailadres is verplicht.");
       return;
     }
 
     try {
       setSavingProfile(true);
-      setProfileError("");
-      setProfileMessage("");
 
       const result = await updateProfile(
-        profile.name.trim(),
-        profile.email.trim()
+        name,
+        email
       );
 
       setProfile({
@@ -117,10 +123,8 @@ function Profile() {
         "Je profiel is bijgewerkt."
       );
     } catch (error) {
-      console.error(error);
-
       setProfileError(
-        error.message ||
+        error?.message ||
           "Je profiel kon niet worden bijgewerkt."
       );
     } finally {
@@ -131,6 +135,9 @@ function Profile() {
   async function handlePasswordSubmit(event) {
     event.preventDefault();
 
+    setPasswordError("");
+    setPasswordMessage("");
+
     if (!passwordForm.currentPassword) {
       setPasswordError(
         "Vul je huidige wachtwoord in."
@@ -138,9 +145,23 @@ function Profile() {
       return;
     }
 
+    if (!passwordForm.newPassword) {
+      setPasswordError(
+        "Vul een nieuw wachtwoord in."
+      );
+      return;
+    }
+
     if (passwordForm.newPassword.length < 8) {
       setPasswordError(
         "Het nieuwe wachtwoord moet minimaal 8 tekens bevatten."
+      );
+      return;
+    }
+
+    if (!passwordForm.confirmPassword) {
+      setPasswordError(
+        "Herhaal je nieuwe wachtwoord."
       );
       return;
     }
@@ -155,10 +176,18 @@ function Profile() {
       return;
     }
 
+    if (
+      passwordForm.currentPassword ===
+      passwordForm.newPassword
+    ) {
+      setPasswordError(
+        "Je nieuwe wachtwoord moet verschillen van je huidige wachtwoord."
+      );
+      return;
+    }
+
     try {
       setSavingPassword(true);
-      setPasswordError("");
-      setPasswordMessage("");
 
       const result = await changePassword(
         passwordForm.currentPassword,
@@ -176,10 +205,8 @@ function Profile() {
         confirmPassword: "",
       });
     } catch (error) {
-      console.error(error);
-
       setPasswordError(
-        error.message ||
+        error?.message ||
           "Je wachtwoord kon niet worden gewijzigd."
       );
     } finally {
@@ -201,33 +228,46 @@ function Profile() {
 
       <section
         className="responsive-card"
-        style={{ marginBottom: "24px" }}
+        style={{
+          marginBottom: "24px",
+        }}
       >
         <h3>Accountgegevens</h3>
 
         {profileError && (
-          <p
+          <div
             role="alert"
+            aria-live="polite"
             style={{
-              padding: "12px",
-              border: "1px solid #c33",
-              borderRadius: "6px",
+              padding: "12px 14px",
+              marginBottom: "18px",
+              border: "1px solid #b52b25",
+              borderRadius: "4px",
+              background: "#fdecea",
+              color: "#b52b25",
+              fontWeight: "600",
             }}
           >
             {profileError}
-          </p>
+          </div>
         )}
 
         {profileMessage && (
-          <p
+          <div
+            role="status"
+            aria-live="polite"
             style={{
-              padding: "12px",
-              border: "1px solid #2a7",
-              borderRadius: "6px",
+              padding: "12px 14px",
+              marginBottom: "18px",
+              border: "1px solid #287a4b",
+              borderRadius: "4px",
+              background: "#edf8f1",
+              color: "#20613c",
+              fontWeight: "600",
             }}
           >
             {profileMessage}
-          </p>
+          </div>
         )}
 
         <form onSubmit={handleProfileSubmit}>
@@ -253,6 +293,8 @@ function Profile() {
               value={profile.name}
               onChange={handleProfileChange}
               className="responsive-input"
+              autoComplete="name"
+              disabled={savingProfile}
             />
 
             <small
@@ -288,6 +330,8 @@ function Profile() {
               value={profile.email}
               onChange={handleProfileChange}
               className="responsive-input"
+              autoComplete="email"
+              disabled={savingProfile}
             />
           </label>
 
@@ -307,29 +351,51 @@ function Profile() {
       <section className="responsive-card">
         <h3>Wachtwoord wijzigen</h3>
 
+        <p
+          style={{
+            marginTop: 0,
+            marginBottom: "20px",
+            color: "#666",
+          }}
+        >
+          Je nieuwe wachtwoord moet minimaal 8
+          tekens bevatten.
+        </p>
+
         {passwordError && (
-          <p
+          <div
             role="alert"
+            aria-live="polite"
             style={{
-              padding: "12px",
-              border: "1px solid #c33",
-              borderRadius: "6px",
+              padding: "12px 14px",
+              marginBottom: "18px",
+              border: "1px solid #b52b25",
+              borderRadius: "4px",
+              background: "#fdecea",
+              color: "#b52b25",
+              fontWeight: "600",
             }}
           >
             {passwordError}
-          </p>
+          </div>
         )}
 
         {passwordMessage && (
-          <p
+          <div
+            role="status"
+            aria-live="polite"
             style={{
-              padding: "12px",
-              border: "1px solid #2a7",
-              borderRadius: "6px",
+              padding: "12px 14px",
+              marginBottom: "18px",
+              border: "1px solid #287a4b",
+              borderRadius: "4px",
+              background: "#edf8f1",
+              color: "#20613c",
+              fontWeight: "600",
             }}
           >
             {passwordMessage}
-          </p>
+          </div>
         )}
 
         <form onSubmit={handlePasswordSubmit}>
@@ -343,6 +409,7 @@ function Profile() {
               style={{
                 display: "block",
                 marginBottom: "6px",
+                fontWeight: "700",
               }}
             >
               Huidig wachtwoord
@@ -355,6 +422,7 @@ function Profile() {
               onChange={handlePasswordChange}
               className="responsive-input"
               autoComplete="current-password"
+              disabled={savingPassword}
             />
           </label>
 
@@ -368,6 +436,7 @@ function Profile() {
               style={{
                 display: "block",
                 marginBottom: "6px",
+                fontWeight: "700",
               }}
             >
               Nieuw wachtwoord
@@ -380,6 +449,7 @@ function Profile() {
               onChange={handlePasswordChange}
               className="responsive-input"
               autoComplete="new-password"
+              disabled={savingPassword}
             />
           </label>
 
@@ -393,6 +463,7 @@ function Profile() {
               style={{
                 display: "block",
                 marginBottom: "6px",
+                fontWeight: "700",
               }}
             >
               Nieuw wachtwoord herhalen
@@ -405,6 +476,7 @@ function Profile() {
               onChange={handlePasswordChange}
               className="responsive-input"
               autoComplete="new-password"
+              disabled={savingPassword}
             />
           </label>
 
