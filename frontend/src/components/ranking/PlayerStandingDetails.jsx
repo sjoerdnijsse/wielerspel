@@ -340,16 +340,17 @@ function PlayerStandingDetails({
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
+                tableLayout: "fixed",
               }}
             >
               <thead>
                 <tr>
                   <th
                     style={{
+                      width: "150px",
                       padding: "10px",
                       textAlign: "left",
-                      borderBottom:
-                        "2px solid #ccc",
+                      borderBottom: "2px solid #ccc",
                     }}
                   >
                     Moment
@@ -359,22 +360,10 @@ function PlayerStandingDetails({
                     style={{
                       padding: "10px",
                       textAlign: "left",
-                      borderBottom:
-                        "2px solid #ccc",
+                      borderBottom: "2px solid #ccc",
                     }}
                   >
-                    Uit
-                  </th>
-
-                  <th
-                    style={{
-                      padding: "10px",
-                      textAlign: "left",
-                      borderBottom:
-                        "2px solid #ccc",
-                    }}
-                  >
-                    In
+                    Transfer
                   </th>
                 </tr>
               </thead>
@@ -388,8 +377,8 @@ function PlayerStandingDetails({
                       <td
                         style={{
                           padding: "10px",
-                          borderBottom:
-                            "1px solid #eee",
+                          borderBottom: "1px solid #eee",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         Na etappe{" "}
@@ -399,22 +388,14 @@ function PlayerStandingDetails({
                       <td
                         style={{
                           padding: "10px",
-                          borderBottom:
-                            "1px solid #eee",
+                          borderBottom: "1px solid #eee",
                         }}
                       >
                         {transfer.outgoingCyclistName}
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "10px",
-                          borderBottom:
-                            "1px solid #eee",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {transfer.incomingCyclistName}
+                        {" → "}
+                        <strong>
+                          {transfer.incomingCyclistName}
+                        </strong>
                       </td>
                     </tr>
                   )
@@ -424,8 +405,7 @@ function PlayerStandingDetails({
           </div>
         ) : (
           <p>
-            Deze speler heeft nog geen transfers
-            uitgevoerd.
+            Deze speler heeft nog geen transfers uitgevoerd.
           </p>
         )}
       </div>
