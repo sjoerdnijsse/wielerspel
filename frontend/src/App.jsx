@@ -13,6 +13,7 @@ import HallOfFame from "./pages/HallOfFame";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
+import Footer from "./components/Footer";
 
 import "./App.css";
 
@@ -43,6 +44,8 @@ function App() {
         {page === "rules" && <Rules />}
         {page === "admin" && <Admin />}
       </main>
+
+      <Footer />
     </>
   );
 }
