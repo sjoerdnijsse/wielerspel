@@ -106,32 +106,59 @@ export async function getTeamsForAdmin() {
   return response.json();
 }
 
-export async function createTeam(name) {
-  const response = await fetch(`${API_URL}/teams`, {
-    method: "POST",
-    headers: createHeaders({ hasBody: true }),
-    body: JSON.stringify({ name }),
-  });
+export async function createTeam(
+  name,
+  jerseyImageUrl
+) {
+  const response = await fetch(
+    `${API_URL}/teams`,
+    {
+      method: "POST",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        name,
+        jerseyImageUrl:
+          jerseyImageUrl?.trim() || null,
+      }),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(
-      await getErrorMessage(response, "Ploeg toevoegen mislukt")
+      await getErrorMessage(
+        response,
+        "Ploeg toevoegen mislukt"
+      )
     );
   }
 
   return response.json();
 }
 
-export async function updateTeam(id, name) {
-  const response = await fetch(`${API_URL}/teams/${id}`, {
-    method: "PUT",
-    headers: createHeaders({ hasBody: true }),
-    body: JSON.stringify({ name }),
-  });
+export async function updateTeam(
+  id,
+  name,
+  jerseyImageUrl
+) {
+  const response = await fetch(
+    `${API_URL}/teams/${id}`,
+    {
+      method: "PUT",
+      headers: createHeaders({ hasBody: true }),
+      body: JSON.stringify({
+        name,
+        jerseyImageUrl:
+          jerseyImageUrl?.trim() || null,
+      }),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(
-      await getErrorMessage(response, "Ploeg wijzigen mislukt")
+      await getErrorMessage(
+        response,
+        "Ploeg wijzigen mislukt"
+      )
     );
   }
 

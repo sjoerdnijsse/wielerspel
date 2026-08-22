@@ -137,7 +137,8 @@ function TeamList({
         <p>
           Kies voor iedere renner één jokeretappe. Iedere
           etappe mag maar één keer worden gebruikt.
-          Vergeet de jokers niet op te slaan als je alles hebt ingevuld.
+          Vergeet de jokers niet op te slaan als je alles
+          hebt ingevuld.
         </p>
       )}
 
@@ -181,11 +182,52 @@ function TeamList({
                 .join(" ")}
             >
               <div className="team-list__info">
-                <strong>{cyclist.name}</strong>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "54px",
+                      minWidth: "54px",
+                      height: "64px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {cyclist.team?.jerseyImageUrl ? (
+                      <img
+                        src={cyclist.team.jerseyImageUrl}
+                        alt={`Shirt van ${
+                          cyclist.team?.name ??
+                          "de ploeg"
+                        }`}
+                        style={{
+                          width: "48px",
+                          height: "60px",
+                          objectFit: "contain",
+                          display: "block",
+                        }}
+                      />
+                    ) : null}
+                  </div>
 
-                <div>
-                  {cyclist.team?.name ?? "Geen ploeg"} · €
-                  {cyclist.price}M
+                  <div
+                    style={{
+                      minWidth: 0,
+                    }}
+                  >
+                    <strong>{cyclist.name}</strong>
+
+                    <div>
+                      {cyclist.team?.name ?? "Geen ploeg"} · €
+                      {cyclist.price}M
+                    </div>
+                  </div>
                 </div>
 
                 {isSelectedForTransfer && (

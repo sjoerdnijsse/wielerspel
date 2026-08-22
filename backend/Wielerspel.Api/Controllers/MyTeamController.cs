@@ -92,7 +92,9 @@ public class MyTeamController : ControllerBase
                     : new
                     {
                         id = x.CompetitionCyclist.Cyclist.Team.Id,
-                        name = x.CompetitionCyclist.Cyclist.Team.Name
+                        name = x.CompetitionCyclist.Cyclist.Team.Name,
+                        jerseyImageUrl =
+                            x.CompetitionCyclist.Cyclist.Team.JerseyImageUrl
                     }
             })
             .ToListAsync();

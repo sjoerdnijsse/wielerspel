@@ -6,5 +6,8 @@ public class Team
 
     public string Name { get; set; } = "";
 
-    public ICollection<Cyclist> Cyclists { get; set; } = new List<Cyclist>();
+    public string? JerseyImageUrl { get; set; }
+
+    public ICollection<Cyclist> Cyclists { get; set; } =
+        new List<Cyclist>();
 }

@@ -35,57 +35,95 @@ public class TeamsController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            return BadRequest("Ploegnaam is verplicht.");
+            return BadRequest(
+                "Ploegnaam is verplicht."
+            );
         }
 
         var alreadyExists = await _context.Teams
-            .AnyAsync(existingTeam => existingTeam.Name.ToLower() == name.ToLower());
+            .AnyAsync(existingTeam =>
+                existingTeam.Name.ToLower() ==
+                name.ToLower()
+            );
 
         if (alreadyExists)
         {
-            return BadRequest("Deze ploeg bestaat al.");
+            return BadRequest(
+                "Deze ploeg bestaat al."
+            );
         }
+
+        var jerseyImageUrl =
+            string.IsNullOrWhiteSpace(
+                team.JerseyImageUrl
+            )
+                ? null
+                : team.JerseyImageUrl.Trim();
 
         var newTeam = new Team
         {
             Id = Guid.NewGuid(),
-            Name = name
+            Name = name,
+            JerseyImageUrl = jerseyImageUrl
         };
 
         _context.Teams.Add(newTeam);
+
         await _context.SaveChangesAsync();
 
         return Ok(newTeam);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateTeam(Guid id, Team team)
+    public async Task<IActionResult> UpdateTeam(
+        Guid id,
+        Team team
+    )
     {
-        var existingTeam = await _context.Teams.FindAsync(id);
+        var existingTeam =
+            await _context.Teams.FindAsync(id);
 
         if (existingTeam == null)
         {
-            return NotFound("Ploeg niet gevonden.");
+            return NotFound(
+                "Ploeg niet gevonden."
+            );
         }
 
         var name = team.Name.Trim();
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            return BadRequest("Ploegnaam is verplicht.");
+            return BadRequest(
+                "Ploegnaam is verplicht."
+            );
         }
 
-        var duplicateExists = await _context.Teams
-            .AnyAsync(otherTeam =>
-                otherTeam.Id != id &&
-                otherTeam.Name.ToLower() == name.ToLower());
+        var duplicateExists =
+            await _context.Teams
+                .AnyAsync(otherTeam =>
+                    otherTeam.Id != id &&
+                    otherTeam.Name.ToLower() ==
+                    name.ToLower()
+                );
 
         if (duplicateExists)
         {
-            return BadRequest("Er bestaat al een ploeg met deze naam.");
+            return BadRequest(
+                "Er bestaat al een ploeg met deze naam."
+            );
         }
 
+        var jerseyImageUrl =
+            string.IsNullOrWhiteSpace(
+                team.JerseyImageUrl
+            )
+                ? null
+                : team.JerseyImageUrl.Trim();
+
         existingTeam.Name = name;
+        existingTeam.JerseyImageUrl =
+            jerseyImageUrl;
 
         await _context.SaveChangesAsync();
 
@@ -93,15 +131,23 @@ public class TeamsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteTeam(Guid id)
+    public async Task<IActionResult> DeleteTeam(
+        Guid id
+    )
     {
         var team = await _context.Teams
-            .Include(existingTeam => existingTeam.Cyclists)
-            .FirstOrDefaultAsync(existingTeam => existingTeam.Id == id);
+            .Include(existingTeam =>
+                existingTeam.Cyclists
+            )
+            .FirstOrDefaultAsync(existingTeam =>
+                existingTeam.Id == id
+            );
 
         if (team == null)
         {
-            return NotFound("Ploeg niet gevonden.");
+            return NotFound(
+                "Ploeg niet gevonden."
+            );
         }
 
         if (team.Cyclists.Count > 0)
@@ -112,6 +158,7 @@ public class TeamsController : ControllerBase
         }
 
         _context.Teams.Remove(team);
+
         await _context.SaveChangesAsync();
 
         return Ok(new
