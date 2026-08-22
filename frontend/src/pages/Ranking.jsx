@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   getCompetitions,
@@ -15,14 +19,17 @@ function Ranking() {
 
   const [selectedUserId, setSelectedUserId] =
     useState("");
+
   const [playerDetails, setPlayerDetails] =
     useState(null);
 
   const [loading, setLoading] = useState(true);
+
   const [detailsLoading, setDetailsLoading] =
     useState(false);
 
   const [error, setError] = useState("");
+
   const [detailsError, setDetailsError] =
     useState("");
 
@@ -73,7 +80,9 @@ function Ranking() {
     }
   }
 
-  async function loadStandings(selectedCompetitionId) {
+  async function loadStandings(
+    selectedCompetitionId
+  ) {
     try {
       setLoading(true);
       setError("");
@@ -98,6 +107,11 @@ function Ranking() {
   }
 
   async function openPlayerDetails(userId) {
+    if (selectedUserId === userId) {
+      closePlayerDetails();
+      return;
+    }
+
     try {
       setSelectedUserId(userId);
       setDetailsLoading(true);
@@ -130,29 +144,13 @@ function Ranking() {
   }
 
   function getPositionLabel(index) {
-    const position = index + 1;
-
-    if (position === 1) {
-      return "🥇";
-    }
-
-    if (position === 2) {
-      return "🥈";
-    }
-
-    if (position === 3) {
-      return "🥉";
-    }
-
-    return position;
+    return index + 1;
   }
 
   return (
     <main className="page-container">
-      
-      <h2>🏆 Klassement</h2>
+      <h2>Klassement</h2>
 
- 
       {error && (
         <p
           style={{
@@ -170,7 +168,9 @@ function Ranking() {
       {!loading &&
         competitions.length === 0 &&
         !error && (
-          <p>Er zijn nog geen competities beschikbaar.</p>
+          <p>
+            Er zijn nog geen competities beschikbaar.
+          </p>
         )}
 
       {!loading &&
@@ -178,7 +178,8 @@ function Ranking() {
         standings.length === 0 &&
         !error && (
           <p>
-            Er staan nog geen spelers in het klassement.
+            Er staan nog geen spelers in het
+            klassement.
           </p>
         )}
 
@@ -237,87 +238,103 @@ function Ranking() {
                   selectedUserId === standing.userId;
 
                 return (
-                  <tr
-                    key={standing.userId}
-                    style={{
-                      backgroundColor: isSelected
-                        ? "#f5f5f5"
-                        : "transparent",
-                    }}
-                  >
-                    <td
+                  <Fragment key={standing.userId}>
+                    <tr
                       style={{
-                        padding: "12px",
-                        borderBottom:
-                          "1px solid #eee",
-                        fontWeight:
-                          index < 3
-                            ? "bold"
-                            : "normal",
+                        backgroundColor: isSelected
+                          ? "#f5f5f5"
+                          : "transparent",
                       }}
                     >
-                      {getPositionLabel(index)}
-                    </td>
-
-                    <td
-                      style={{
-                        padding: "12px",
-                        borderBottom:
-                          "1px solid #eee",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openPlayerDetails(
-                            standing.userId
-                          )
-                        }
+                      <td
                         style={{
-                          padding: 0,
-                          border: "none",
-                          background: "none",
-                          font: "inherit",
-                          fontWeight: isSelected
-                            ? "bold"
-                            : "normal",
-                          textDecoration: "underline",
-                          cursor: "pointer",
+                          padding: "12px",
+                          borderBottom:
+                            "1px solid #eee",
+                          fontWeight:
+                            index < 3
+                              ? "bold"
+                              : "normal",
                         }}
                       >
-                        {standing.userName}
-                      </button>
-                    </td>
+                        {getPositionLabel(index)}
+                      </td>
 
-                    <td
-                      style={{
-                        padding: "12px",
-                        textAlign: "right",
-                        borderBottom:
-                          "1px solid #eee",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {standing.totalPoints}
-                    </td>
-                  </tr>
+                      <td
+                        style={{
+                          padding: "12px",
+                          borderBottom:
+                            "1px solid #eee",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openPlayerDetails(
+                              standing.userId
+                            )
+                          }
+                          style={{
+                            padding: 0,
+                            minHeight: 0,
+                            border: "none",
+                            background: "none",
+                            font: "inherit",
+                            fontWeight: isSelected
+                              ? "bold"
+                              : "normal",
+                            textDecoration:
+                              "underline",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {standing.userName}
+                        </button>
+                      </td>
+
+                      <td
+                        style={{
+                          padding: "12px",
+                          textAlign: "right",
+                          borderBottom:
+                            "1px solid #eee",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {standing.totalPoints}
+                      </td>
+                    </tr>
+
+                    {isSelected && (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          style={{
+                            padding: "0 12px 16px",
+                            borderBottom:
+                              "1px solid #ddd",
+                            background: "#fafafa",
+                          }}
+                        >
+                          <PlayerStandingDetails
+                            playerDetails={
+                              playerDetails
+                            }
+                            loading={detailsLoading}
+                            error={detailsError}
+                            onClose={
+                              closePlayerDetails
+                            }
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>
           </table>
         </div>
-      )}
-
-      {(selectedUserId ||
-        playerDetails ||
-        detailsLoading ||
-        detailsError) && (
-        <PlayerStandingDetails
-          playerDetails={playerDetails}
-          loading={detailsLoading}
-          error={detailsError}
-          onClose={closePlayerDetails}
-        />
       )}
     </main>
   );

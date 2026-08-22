@@ -8,7 +8,7 @@ function PlayerStandingDetails({
     return (
       <section
         style={{
-          marginTop: "24px",
+          marginTop: "12px",
           padding: "20px",
           border: "1px solid #ddd",
           borderRadius: "10px",
@@ -25,7 +25,7 @@ function PlayerStandingDetails({
     return (
       <section
         style={{
-          marginTop: "24px",
+          marginTop: "12px",
           padding: "20px",
           border: "1px solid #c33",
           borderRadius: "10px",
@@ -63,7 +63,7 @@ function PlayerStandingDetails({
   return (
     <section
       style={{
-        marginTop: "24px",
+        marginTop: "12px",
         padding: "20px",
         border: "1px solid #ddd",
         borderRadius: "10px",
@@ -222,17 +222,6 @@ function PlayerStandingDetails({
                           "2px solid #ccc",
                       }}
                     >
-                      Nr.
-                    </th>
-
-                    <th
-                      style={{
-                        padding: "10px",
-                        textAlign: "left",
-                        borderBottom:
-                          "2px solid #ccc",
-                      }}
-                    >
                       Renner
                     </th>
 
@@ -279,16 +268,6 @@ function PlayerStandingDetails({
                           cyclist.competitionCyclistId
                         }
                       >
-                        <td
-                          style={{
-                            padding: "10px",
-                            borderBottom:
-                              "1px solid #eee",
-                          }}
-                        >
-                          {cyclist.number}
-                        </td>
-
                         <td
                           style={{
                             padding: "10px",
