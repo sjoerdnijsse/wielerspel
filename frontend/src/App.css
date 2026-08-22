@@ -358,6 +358,14 @@
 
 .team-list__info {
   min-width: 0;
+  width: 100%;
+  justify-self: start;
+  text-align: left;
+}
+
+.team-list__info strong,
+.team-list__info div {
+  text-align: left;
 }
 
 .available-cyclists__info {
