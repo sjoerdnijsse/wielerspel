@@ -8,6 +8,8 @@ public class PlayerStandingDetailDto
 
     public int TotalPoints { get; set; }
 
+    public int TransfersUsed { get; set; }
+
     public DateTime TeamLockDate { get; set; }
 
     public bool TeamVisible { get; set; }
@@ -17,4 +19,7 @@ public class PlayerStandingDetailDto
 
     public List<PlayerTeamCyclistDto> Cyclists { get; set; }
         = new List<PlayerTeamCyclistDto>();
+
+    public List<PlayerTransferDto> Transfers { get; set; }
+        = new List<PlayerTransferDto>();
 }

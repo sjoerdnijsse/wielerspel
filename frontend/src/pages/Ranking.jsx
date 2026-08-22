@@ -221,6 +221,17 @@ function Ranking() {
 
                 <th
                   style={{
+                    textAlign: "center",
+                    padding: "12px",
+                    borderBottom: "2px solid #ccc",
+                    width: "120px",
+                  }}
+                >
+                  Transfers
+                </th>
+
+                <th
+                  style={{
                     textAlign: "right",
                     padding: "12px",
                     borderBottom: "2px solid #ccc",
@@ -295,6 +306,17 @@ function Ranking() {
                       <td
                         style={{
                           padding: "12px",
+                          textAlign: "center",
+                          borderBottom:
+                            "1px solid #eee",
+                        }}
+                      >
+                        {standing.transfersUsed ?? 0}
+                      </td>
+
+                      <td
+                        style={{
+                          padding: "12px",
                           textAlign: "right",
                           borderBottom:
                             "1px solid #eee",
@@ -308,7 +330,7 @@ function Ranking() {
                     {isSelected && (
                       <tr>
                         <td
-                          colSpan={3}
+                          colSpan={4}
                           style={{
                             padding: "0 12px 16px",
                             borderBottom:

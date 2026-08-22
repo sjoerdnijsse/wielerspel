@@ -7,4 +7,6 @@ public class CompetitionStandingDto
     public string UserName { get; set; } = string.Empty;
 
     public int TotalPoints { get; set; }
+
+    public int TransfersUsed { get; set; }
 }

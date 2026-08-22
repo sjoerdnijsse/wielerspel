@@ -94,6 +94,18 @@ function PlayerStandingDetails({
               {playerDetails.totalPoints}
             </strong>
           </p>
+
+          <p
+            style={{
+              marginTop: "6px",
+              marginBottom: 0,
+            }}
+          >
+            Transfers gebruikt:{" "}
+            <strong>
+              {playerDetails.transfersUsed ?? 0}
+            </strong>
+          </p>
         </div>
 
         <button
@@ -317,6 +329,105 @@ function PlayerStandingDetails({
               </table>
             </div>
           )}
+      </div>
+
+      <div style={{ marginTop: "28px" }}>
+        <h4>Transferhistorie</h4>
+
+        {playerDetails.transfers?.length > 0 ? (
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      padding: "10px",
+                      textAlign: "left",
+                      borderBottom:
+                        "2px solid #ccc",
+                    }}
+                  >
+                    Moment
+                  </th>
+
+                  <th
+                    style={{
+                      padding: "10px",
+                      textAlign: "left",
+                      borderBottom:
+                        "2px solid #ccc",
+                    }}
+                  >
+                    Uit
+                  </th>
+
+                  <th
+                    style={{
+                      padding: "10px",
+                      textAlign: "left",
+                      borderBottom:
+                        "2px solid #ccc",
+                    }}
+                  >
+                    In
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {playerDetails.transfers.map(
+                  (transfer, index) => (
+                    <tr
+                      key={`${transfer.afterStageNumber}-${transfer.outgoingCyclistName}-${transfer.incomingCyclistName}-${index}`}
+                    >
+                      <td
+                        style={{
+                          padding: "10px",
+                          borderBottom:
+                            "1px solid #eee",
+                        }}
+                      >
+                        Na etappe{" "}
+                        {transfer.afterStageNumber}
+                      </td>
+
+                      <td
+                        style={{
+                          padding: "10px",
+                          borderBottom:
+                            "1px solid #eee",
+                        }}
+                      >
+                        {transfer.outgoingCyclistName}
+                      </td>
+
+                      <td
+                        style={{
+                          padding: "10px",
+                          borderBottom:
+                            "1px solid #eee",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {transfer.incomingCyclistName}
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>
+            Deze speler heeft nog geen transfers
+            uitgevoerd.
+          </p>
+        )}
       </div>
     </section>
   );

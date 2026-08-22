@@ -61,7 +61,9 @@ public class StandingsController : ControllerBase
                     competitionUser.UserId,
 
                     UserName =
-                        competitionUser.User.Name
+                        competitionUser.User.Name,
+
+                    competitionUser.TransfersUsed
                 })
                 .ToListAsync();
 
@@ -210,7 +212,10 @@ public class StandingsController : ControllerBase
                         pointTotals.GetValueOrDefault(
                             competitionUser
                                 .CompetitionUserId
-                        )
+                        ),
+
+                    TransfersUsed =
+                        competitionUser.TransfersUsed
                 }
             )
             .OrderByDescending(standing =>
@@ -261,15 +266,17 @@ public class StandingsController : ControllerBase
                     competitionUser.UserId == userId
                 )
                 .Select(competitionUser => new
-                {
-                    CompetitionUserId =
-                        competitionUser.Id,
+                    {
+                        CompetitionUserId =
+                            competitionUser.Id,
 
-                    competitionUser.UserId,
+                        competitionUser.UserId,
 
-                    UserName =
-                        competitionUser.User.Name
-                })
+                        UserName =
+                            competitionUser.User.Name,
+
+                        competitionUser.TransfersUsed
+                    })
                 .FirstOrDefaultAsync();
 
         if (competitionUser is null)
@@ -396,6 +403,104 @@ public class StandingsController : ControllerBase
                     group => group.Key,
                     group => group.ToList()
                 );
+
+        var transferCyclistIds =
+                selectionHistories
+                    .Select(history =>
+                        history.CompetitionCyclistId
+                    )
+                    .Distinct()
+                    .ToList();
+
+            var transferCyclistNames =
+                await _context.CompetitionCyclists
+                    .AsNoTracking()
+                    .Where(competitionCyclist =>
+                        transferCyclistIds.Contains(
+                            competitionCyclist.Id
+                        )
+                    )
+                    .Select(competitionCyclist => new
+                    {
+                        competitionCyclist.Id,
+
+                        Name =
+                            competitionCyclist.Cyclist.Name
+                    })
+                    .ToDictionaryAsync(
+                        competitionCyclist =>
+                            competitionCyclist.Id,
+                        competitionCyclist =>
+                            competitionCyclist.Name
+                    );
+
+            var transfers =
+                new List<PlayerTransferDto>();
+
+            foreach (var historyGroup in
+                selectionHistories.GroupBy(history =>
+                    history.CompetitionUserCyclistId
+                ))
+            {
+                var orderedHistories =
+                    historyGroup
+                        .OrderBy(history =>
+                            history.FromStageNumber
+                        )
+                        .ToList();
+
+                for (
+                    var index = 0;
+                    index < orderedHistories.Count - 1;
+                    index++
+                )
+                {
+                    var outgoingHistory =
+                        orderedHistories[index];
+
+                    var incomingHistory =
+                        orderedHistories[index + 1];
+
+                    if (!outgoingHistory.ToStageNumber.HasValue)
+                    {
+                        continue;
+                    }
+
+                    transfers.Add(
+                        new PlayerTransferDto
+                        {
+                            AfterStageNumber =
+                                outgoingHistory
+                                    .ToStageNumber.Value,
+
+                            OutgoingCyclistName =
+                                transferCyclistNames
+                                    .GetValueOrDefault(
+                                        outgoingHistory
+                                            .CompetitionCyclistId,
+                                        "Onbekende renner"
+                                    ),
+
+                            IncomingCyclistName =
+                                transferCyclistNames
+                                    .GetValueOrDefault(
+                                        incomingHistory
+                                            .CompetitionCyclistId,
+                                        "Onbekende renner"
+                                    )
+                        }
+                    );
+                }
+            }
+
+            transfers = transfers
+                .OrderBy(transfer =>
+                    transfer.AfterStageNumber
+                )
+                .ThenBy(transfer =>
+                    transfer.OutgoingCyclistName
+                )
+                .ToList();
 
         var stagePoints = publishedStages
             .Select(stage =>
@@ -625,6 +730,9 @@ public class StandingsController : ControllerBase
                         stage => stage.Points
                     ),
 
+                TransfersUsed =
+                    competitionUser.TransfersUsed,
+
                 TeamLockDate =
                     competition.TeamLockDate,
 
@@ -635,7 +743,10 @@ public class StandingsController : ControllerBase
                     stagePoints,
 
                 Cyclists =
-                    cyclists
+                    cyclists,
+
+                Transfers =
+                    transfers
             };
 
         return Ok(result);
