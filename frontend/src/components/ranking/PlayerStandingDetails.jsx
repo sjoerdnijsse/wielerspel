@@ -340,14 +340,13 @@ function PlayerStandingDetails({
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                tableLayout: "fixed",
               }}
             >
               <thead>
                 <tr>
                   <th
                     style={{
-                      width: "150px",
+                      width: "180px",
                       padding: "10px",
                       textAlign: "left",
                       borderBottom: "2px solid #ccc",
@@ -376,7 +375,9 @@ function PlayerStandingDetails({
                     >
                       <td
                         style={{
+                          width: "180px",
                           padding: "10px",
+                          textAlign: "left",
                           borderBottom: "1px solid #eee",
                           whiteSpace: "nowrap",
                         }}
@@ -388,6 +389,7 @@ function PlayerStandingDetails({
                       <td
                         style={{
                           padding: "10px",
+                          textAlign: "left",
                           borderBottom: "1px solid #eee",
                         }}
                       >
