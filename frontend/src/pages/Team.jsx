@@ -489,30 +489,6 @@ async function handleConfirmTransfers() {
       currentAssignedCyclist?.price ?? 0;
 
     const budgetWithoutCurrentAssignment =
-      transferBudgetRemaining +
-      currentAssignedPrice;
-
-    return cyclist.price <=
-      budgetWithoutCurrentAssignment;
-  }
-
-  function canAffordIncomingCyclist(
-    cyclist,
-    currentSelectionId
-  ) {
-    const currentAssignedCyclistId =
-      transferAssignments[currentSelectionId];
-
-    const currentAssignedCyclist =
-      availableCyclists.find(
-        (item) =>
-          item.id === currentAssignedCyclistId
-      );
-
-    const currentAssignedPrice =
-      currentAssignedCyclist?.price ?? 0;
-
-    const budgetWithoutCurrentAssignment =
           transferBudgetRemaining +
           currentAssignedPrice;
 
@@ -569,19 +545,16 @@ async function handleConfirmTransfers() {
             }}
           >
             <Summary
-              icon="👥"
               label="Renners"
               value={`${teamData.selectedCount} / ${teamData.teamSize}`}
             />
 
             <Summary
-              icon="💰"
               label="Budget gebruikt"
               value={`€${teamData.totalPrice}M / €${teamData.budget}M`}
             />
 
             <Summary
-              icon="💶"
               label="Budget over"
               value={`€${teamData.remainingBudget}M`}
             />
@@ -658,19 +631,16 @@ async function handleConfirmTransfers() {
                 }}
               >
                 <Summary
-                  icon="💰"
                   label="Beschikbaar voor transfers"
                   value={`€${transferAvailableBudget}M`}
                 />
 
                 <Summary
-                  icon="🛒"
                   label="Nieuwe renners"
                   value={`€${transferIncomingTotal}M`}
                 />
 
                 <Summary
-                  icon="💶"
                   label="Budget over"
                   value={`€${transferBudgetRemaining}M`}
                 />
@@ -862,19 +832,10 @@ async function handleConfirmTransfers() {
   );
 }
 
-function Summary({ label, value, icon }) {
+function Summary({ label, value }) {
   return (
     <div className="summary-card">
       <span className="summary-card__label">
-        {icon && (
-          <span
-            className="summary-card__icon"
-            aria-hidden="true"
-          >
-            {icon}
-          </span>
-        )}
-
         {label}
       </span>
 
