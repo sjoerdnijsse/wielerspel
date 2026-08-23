@@ -9,4 +9,6 @@ public class PlayerTransferDto
 
     public string IncomingCyclistName { get; set; }
         = string.Empty;
+
+    public int OutgoingCyclistPoints { get; set; }
 }

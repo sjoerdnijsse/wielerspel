@@ -12,9 +12,13 @@ public class PlayerTeamCyclistDto
 
     public string TeamName { get; set; } = string.Empty;
 
+    public string? JerseyImageUrl { get; set; }
+
     public int Number { get; set; }
 
     public int Price { get; set; }
 
     public int? JokerStageNumber { get; set; }
+
+    public int Points { get; set; }
 }

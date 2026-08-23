@@ -137,8 +137,7 @@ function PlayerStandingDetails({
                     style={{
                       padding: "10px",
                       textAlign: "left",
-                      borderBottom:
-                        "2px solid #ccc",
+                      borderBottom: "2px solid #ccc",
                     }}
                   >
                     Etappe
@@ -148,8 +147,7 @@ function PlayerStandingDetails({
                     style={{
                       padding: "10px",
                       textAlign: "right",
-                      borderBottom:
-                        "2px solid #ccc",
+                      borderBottom: "2px solid #ccc",
                     }}
                   >
                     Punten
@@ -287,7 +285,36 @@ function PlayerStandingDetails({
                               "1px solid #eee",
                           }}
                         >
-                          {cyclist.cyclistName}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                              minWidth: "160px",
+                            }}
+                          >
+                            {cyclist.jerseyImageUrl && (
+                              <img
+                                src={
+                                  cyclist.jerseyImageUrl
+                                }
+                                alt=""
+                                style={{
+                                  width: "32px",
+                                  height: "40px",
+                                  objectFit: "contain",
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+
+                            <span>
+                              {cyclist.cyclistName}{" "}
+                              <strong>
+                                ({cyclist.points ?? 0} pnt)
+                              </strong>
+                            </span>
+                          </div>
                         </td>
 
                         <td
@@ -378,7 +405,8 @@ function PlayerStandingDetails({
                           width: "180px",
                           padding: "10px",
                           textAlign: "left",
-                          borderBottom: "1px solid #eee",
+                          borderBottom:
+                            "1px solid #eee",
                           whiteSpace: "nowrap",
                         }}
                       >
@@ -390,10 +418,14 @@ function PlayerStandingDetails({
                         style={{
                           padding: "10px",
                           textAlign: "left",
-                          borderBottom: "1px solid #eee",
+                          borderBottom:
+                            "1px solid #eee",
                         }}
                       >
-                        {transfer.outgoingCyclistName}
+                        {transfer.outgoingCyclistName}{" "}
+                        <strong>
+                          ({transfer.outgoingCyclistPoints ?? 0} pnt)
+                        </strong>
                         {" → "}
                         <strong>
                           {transfer.incomingCyclistName}
@@ -407,7 +439,8 @@ function PlayerStandingDetails({
           </div>
         ) : (
           <p>
-            Deze speler heeft nog geen transfers uitgevoerd.
+            Deze speler heeft nog geen transfers
+            uitgevoerd.
           </p>
         )}
       </div>
