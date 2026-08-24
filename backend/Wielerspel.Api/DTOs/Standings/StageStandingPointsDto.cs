@@ -6,6 +6,8 @@ public class StageStandingPointsDto
 
     public int StageNumber { get; set; }
 
+    public bool NoResult { get; set; }
+
     public int StageResultPoints { get; set; }
 
     public int JokerPoints { get; set; }

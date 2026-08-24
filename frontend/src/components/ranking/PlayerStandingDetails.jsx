@@ -174,12 +174,13 @@ function PlayerStandingDetails({
                         style={{
                           padding: "10px",
                           textAlign: "right",
-                          borderBottom:
-                            "1px solid #eee",
+                          borderBottom: "1px solid #eee",
                           fontWeight: "bold",
                         }}
                       >
-                        {stagePoint.points}
+                        {stagePoint.noResult
+                          ? "Geen uitslag"
+                          : stagePoint.points}
                       </td>
                     </tr>
                   )

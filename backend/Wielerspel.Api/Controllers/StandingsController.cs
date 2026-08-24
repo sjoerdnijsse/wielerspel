@@ -81,6 +81,8 @@ public class StandingsController : ControllerBase
 
                         stage.StageNumber,
 
+                        stage.NoResult,
+
                         stage.YellowJerseyCompetitionCyclistId,
 
                         stage.GreenJerseyCompetitionCyclistId,
@@ -302,6 +304,7 @@ public class StandingsController : ControllerBase
                 {
                     StageId = stage.Id,
                     stage.StageNumber,
+                    stage.NoResult,
 
                     stage.YellowJerseyCompetitionCyclistId,
 
@@ -691,6 +694,9 @@ public class StandingsController : ControllerBase
 
                     StageNumber =
                         stage.StageNumber,
+
+                    NoResult =
+                        stage.NoResult,
 
                     StageResultPoints =
                         stageResultPoints,
