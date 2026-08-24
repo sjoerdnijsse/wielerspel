@@ -61,6 +61,8 @@ export default function StageResultManager({ competition }) {
     setWhiteJerseyCompetitionCyclistId,
   ] = useState("");
 
+  const [noResult, setNoResult] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [loadingResults, setLoadingResults] =
     useState(false);
@@ -84,10 +86,13 @@ export default function StageResultManager({ competition }) {
 
   function resetResultForm() {
     setSelections(createEmptySelections());
+
     setYellowJerseyCompetitionCyclistId("");
     setGreenJerseyCompetitionCyclistId("");
     setPolkaDotJerseyCompetitionCyclistId("");
     setWhiteJerseyCompetitionCyclistId("");
+
+    setNoResult(false);
   }
 
   async function loadInitialData() {
@@ -195,6 +200,8 @@ export default function StageResultManager({ competition }) {
         stageData.whiteJerseyCompetitionCyclistId ??
           ""
       );
+
+      setNoResult(stageData.noResult ?? false);
 
     } catch (err) {
       setError(
@@ -336,6 +343,10 @@ export default function StageResultManager({ competition }) {
 }
 
   function validateResults() {
+    if (noResult) {
+      return "";
+    }
+
     const filledSelections =
       selections.filter(Boolean);
 
@@ -422,20 +433,22 @@ export default function StageResultManager({ competition }) {
       return;
     }
 
-    const results = selections
-      .map(
-        (
-          competitionCyclistId,
-          index
-        ) => ({
-          competitionCyclistId,
-          position: index + 1,
-        })
-      )
-      .filter(
-        (result) =>
-          result.competitionCyclistId
-      );
+    const results = noResult
+      ? []
+      : selections
+          .map(
+            (
+              competitionCyclistId,
+              index
+            ) => ({
+              competitionCyclistId,
+              position: index + 1,
+            })
+          )
+          .filter(
+            (result) =>
+              result.competitionCyclistId
+          );
 
     try {
       setSaving(true);
@@ -446,10 +459,19 @@ export default function StageResultManager({ competition }) {
         competition.id,
         selectedStageId,
         results,
-        yellowJerseyCompetitionCyclistId,
-        greenJerseyCompetitionCyclistId,
-        polkaDotJerseyCompetitionCyclistId,
-        whiteJerseyCompetitionCyclistId
+        noResult
+          ? null
+          : yellowJerseyCompetitionCyclistId,
+        noResult
+          ? null
+          : greenJerseyCompetitionCyclistId,
+        noResult
+          ? null
+          : polkaDotJerseyCompetitionCyclistId,
+        noResult
+          ? null
+          : whiteJerseyCompetitionCyclistId,
+        noResult
       );
 
       setStages((currentStages) =>
@@ -458,6 +480,7 @@ export default function StageResultManager({ competition }) {
             ? {
                 ...stage,
                 resultsPublished: false,
+                noResult,
               }
             : stage
         )
@@ -466,7 +489,9 @@ export default function StageResultManager({ competition }) {
       await loadResults(selectedStageId);
 
       setMessage(
-        "De etappe-uitslag en truiendragers zijn opgeslagen."
+        noResult
+          ? "De etappe is zonder uitslag opgeslagen."
+          : "De etappe-uitslag en truiendragers zijn opgeslagen."
       );
     } catch (err) {
       setError(
@@ -510,6 +535,7 @@ export default function StageResultManager({ competition }) {
             ? {
                 ...stage,
                 resultsPublished: false,
+                noResult: false,
               }
             : stage
         )
@@ -534,11 +560,24 @@ export default function StageResultManager({ competition }) {
       return;
     }
 
-    const validationError = validateResults();
+    if (!noResult) {
+      const validationError =
+        validateResults();
 
-    if (validationError) {
+      if (validationError) {
+        setError(
+          "Sla eerst een geldige etappe-uitslag en alle truiendragers op voordat je publiceert."
+        );
+        return;
+      }
+    }
+
+    if (
+      noResult &&
+      !selectedStage?.noResult
+    ) {
       setError(
-        "Sla eerst een geldige etappe-uitslag en alle truiendragers op voordat je publiceert."
+        "Sla eerst op dat deze etappe geen uitslag heeft voordat je publiceert."
       );
       return;
     }
@@ -559,13 +598,16 @@ export default function StageResultManager({ competition }) {
             ? {
                 ...stage,
                 resultsPublished: true,
+                noResult,
               }
             : stage
         )
       );
 
       setMessage(
-        "De etappe-uitslag is gepubliceerd."
+        noResult
+          ? "De etappe zonder uitslag is gepubliceerd."
+          : "De etappe-uitslag is gepubliceerd."
       );
     } catch (err) {
       setError(
@@ -696,16 +738,107 @@ export default function StageResultManager({ competition }) {
             <span>Status</span>
 
             <strong>
-              {selectedStage.resultsPublished
-                ? "Gepubliceerd"
-                : "Niet gepubliceerd"}
+              {selectedStage.noResult
+                ? selectedStage.resultsPublished
+                  ? "Geen uitslag · gepubliceerd"
+                  : "Geen uitslag · niet gepubliceerd"
+                : selectedStage.resultsPublished
+                  ? "Gepubliceerd"
+                  : "Niet gepubliceerd"}
             </strong>
           </div>
         )}
       </section>
 
+      {selectedStage && (
+      <section
+        className="responsive-card"
+        style={{
+          marginBottom: "24px",
+        }}
+      >
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "10px",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={noResult}
+            onChange={(event) => {
+              const checked =
+                event.target.checked;
+
+              setNoResult(checked);
+              setError("");
+              setMessage("");
+
+              if (checked) {
+                setSelections(
+                  createEmptySelections()
+                );
+
+                setYellowJerseyCompetitionCyclistId(
+                  ""
+                );
+                setGreenJerseyCompetitionCyclistId(
+                  ""
+                );
+                setPolkaDotJerseyCompetitionCyclistId(
+                  ""
+                );
+                setWhiteJerseyCompetitionCyclistId(
+                  ""
+                );
+              }
+            }}
+            disabled={
+              saving || loadingResults
+            }
+            style={{
+              marginTop: "4px",
+            }}
+          />
+
+          <span>
+            <strong>
+              Deze etappe heeft geen uitslag
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "4px",
+                color: "#666",
+              }}
+            >
+              Er worden geen etappepunten,
+              jokerpunten of truipunten toegekend.
+              Alle spelers krijgen voor deze
+              etappe 0 punten.
+            </span>
+          </span>
+        </label>
+      </section>
+    )}
+
       {loadingResults ? (
         <p>Uitslag laden...</p>
+      ) : noResult ? (
+        <section className="responsive-card">
+          <h3 style={{ marginTop: 0 }}>
+            Geen uitslag
+          </h3>
+
+          <p style={{ marginBottom: 0 }}>
+            Voor deze etappe wordt geen uitslag
+            ingevoerd. Sla deze keuze op en
+            publiceer daarna de etappe.
+          </p>
+        </section>
       ) : (
         <>
           <section className="responsive-card">
@@ -1009,7 +1142,9 @@ export default function StageResultManager({ competition }) {
         >
           {saving
             ? "Bezig..."
-            : "Uitslag opslaan"}
+            : noResult
+              ? "Zonder uitslag opslaan"
+              : "Uitslag opslaan"}
         </button>
 
         {selectedStage?.resultsPublished ? (
@@ -1034,7 +1169,9 @@ export default function StageResultManager({ competition }) {
               !selectedStageId
             }
           >
-            Uitslag publiceren
+            {noResult
+            ? "Etappe publiceren"
+            : "Uitslag publiceren"}
           </button>
         )}
 

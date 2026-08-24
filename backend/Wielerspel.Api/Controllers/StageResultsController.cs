@@ -63,7 +63,9 @@ public class StageResultsController : ControllerBase
             stage.YellowJerseyCompetitionCyclistId,
             stage.GreenJerseyCompetitionCyclistId,
             stage.PolkaDotJerseyCompetitionCyclistId,
-            stage.WhiteJerseyCompetitionCyclistId
+            stage.WhiteJerseyCompetitionCyclistId,
+            stage.NoResult,
+            stage.ResultsPublished
         });
     }
 
@@ -86,6 +88,42 @@ public class StageResultsController : ControllerBase
         {
             return NotFound("Etappe niet gevonden.");
         }
+
+        // -----------------------------------------
+        // GEEN UITSLAG
+        // -----------------------------------------
+
+        if (request.NoResult)
+        {
+            var oldResults = await _context.StageResults
+                .Where(x => x.StageId == stageId)
+                .ToListAsync();
+
+            _context.StageResults.RemoveRange(oldResults);
+
+            stage.YellowJerseyCompetitionCyclistId = null;
+            stage.GreenJerseyCompetitionCyclistId = null;
+            stage.PolkaDotJerseyCompetitionCyclistId = null;
+            stage.WhiteJerseyCompetitionCyclistId = null;
+
+            stage.NoResult = true;
+
+            // Eerst opslaan. Publiceren gebeurt via
+            // het bestaande publicatieproces.
+            stage.ResultsPublished = false;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message =
+                    "Etappe opgeslagen zonder uitslag."
+            });
+        }
+
+        // -----------------------------------------
+        // NORMALE UITSLAG
+        // -----------------------------------------
 
         if (request.Results == null ||
             request.Results.Count == 0)
@@ -141,9 +179,11 @@ public class StageResultsController : ControllerBase
             .OrderBy(position => position)
             .ToList();
 
-        for (var index = 0;
-             index < orderedPositions.Count;
-             index++)
+        for (
+            var index = 0;
+            index < orderedPositions.Count;
+            index++
+        )
         {
             var expectedPosition = index + 1;
 
@@ -209,8 +249,10 @@ public class StageResultsController : ControllerBase
                 .Select(x => x.Id)
                 .ToListAsync();
 
-        if (validCyclistIds.Count !=
-            submittedCyclistIds.Count)
+        if (
+            validCyclistIds.Count !=
+            submittedCyclistIds.Count
+        )
         {
             return BadRequest(
                 "Een of meer geselecteerde renners " +
@@ -218,11 +260,14 @@ public class StageResultsController : ControllerBase
             );
         }
 
-        var oldResults = await _context.StageResults
-            .Where(x => x.StageId == stageId)
-            .ToListAsync();
+        var existingResults =
+            await _context.StageResults
+                .Where(x => x.StageId == stageId)
+                .ToListAsync();
 
-        _context.StageResults.RemoveRange(oldResults);
+        _context.StageResults.RemoveRange(
+            existingResults
+        );
 
         foreach (var result in request.Results)
         {
@@ -251,6 +296,9 @@ public class StageResultsController : ControllerBase
 
         stage.WhiteJerseyCompetitionCyclistId =
             request.WhiteJerseyCompetitionCyclistId;
+
+        // Het is weer een normale uitslag.
+        stage.NoResult = false;
 
         // Een gewijzigde uitslag moet opnieuw
         // gepubliceerd worden.
@@ -294,6 +342,8 @@ public class StageResultsController : ControllerBase
         stage.GreenJerseyCompetitionCyclistId = null;
         stage.PolkaDotJerseyCompetitionCyclistId = null;
         stage.WhiteJerseyCompetitionCyclistId = null;
+
+        stage.NoResult = false;
         stage.ResultsPublished = false;
 
         await _context.SaveChangesAsync();

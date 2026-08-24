@@ -613,7 +613,8 @@ export async function saveStageResults(
   yellowJerseyCompetitionCyclistId,
   greenJerseyCompetitionCyclistId,
   polkaDotJerseyCompetitionCyclistId,
-  whiteJerseyCompetitionCyclistId
+  whiteJerseyCompetitionCyclistId,
+  noResult = false
 ) {
   const response = await fetch(
     `${API_URL}/competitions/${competitionId}/stages/${stageId}/results`,
@@ -626,6 +627,7 @@ export async function saveStageResults(
         greenJerseyCompetitionCyclistId,
         polkaDotJerseyCompetitionCyclistId,
         whiteJerseyCompetitionCyclistId,
+        noResult,
       }),
     }
   );

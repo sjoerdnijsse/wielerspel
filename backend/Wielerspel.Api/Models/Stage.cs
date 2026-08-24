@@ -20,6 +20,8 @@ public class Stage
 
     public bool ResultsPublished { get; set; }
 
+    public bool NoResult { get; set; }
+
     public Guid? YellowJerseyCompetitionCyclistId { get; set; }
 
     public Guid? GreenJerseyCompetitionCyclistId { get; set; }

@@ -30,4 +30,6 @@ public class SaveStageResultsRequest
         get;
         set;
     }
+
+    public bool NoResult { get; set; }
 }

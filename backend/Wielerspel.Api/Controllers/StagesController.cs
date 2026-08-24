@@ -55,7 +55,8 @@ public class StagesController : ControllerBase
             stage.StartTime,
             stage.Type,
             typeName = GetStageTypeName(stage.Type),
-            stage.ResultsPublished
+            stage.ResultsPublished,
+            stage.NoResult
         });
 
         return Ok(result);
@@ -229,7 +230,7 @@ public class StagesController : ControllerBase
         return Ok(ToStageResponse(existingStage));
     }
 
-    [HttpPut("{stageId:guid}/publish-results")]
+   [HttpPut("{stageId:guid}/publish-results")]
     [Authorize(Roles = "Moderator")]
     public async Task<IActionResult> PublishResults(
         Guid competitionId,
@@ -240,19 +241,23 @@ public class StagesController : ControllerBase
                 stage.Id == stageId &&
                 stage.CompetitionId == competitionId);
 
-            if (stage == null)
+        if (stage == null)
         {
-        return NotFound("Etappe niet gevonden.");
-    }
+            return NotFound("Etappe niet gevonden.");
+        }
 
         var hasResults = await _context.StageResults
             .AnyAsync(result => result.StageId == stageId);
 
-            if (!hasResults)
+        // Normaal moet er een uitslag zijn.
+        // Bij een etappe met NoResult = true mag de
+        // etappe zonder uitslag worden gepubliceerd.
+        if (!hasResults && !stage.NoResult)
         {
-        return BadRequest(
-            "De uitslag kan niet worden gepubliceerd omdat er nog geen resultaten zijn."
-        );
+            return BadRequest(
+                "De uitslag kan niet worden gepubliceerd " +
+                "omdat er nog geen resultaten zijn."
+            );
         }
 
         stage.ResultsPublished = true;
@@ -261,9 +266,10 @@ public class StagesController : ControllerBase
 
         return Ok(new
         {
-        stage.Id,
-        stage.ResultsPublished
-    });
+            stage.Id,
+            stage.NoResult,
+            stage.ResultsPublished
+        });
     }
 
     [HttpPut("{stageId:guid}/unpublish-results")]
@@ -376,7 +382,8 @@ public class StagesController : ControllerBase
             stage.StartTime,
             stage.Type,
             typeName = GetStageTypeName(stage.Type),
-            stage.ResultsPublished
+            stage.ResultsPublished,
+            stage.NoResult
         };
     }
 
