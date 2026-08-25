@@ -194,16 +194,23 @@ function Ranking() {
             style={{
               width: "100%",
               borderCollapse: "collapse",
+              tableLayout: "fixed",
             }}
           >
+            <colgroup>
+              <col style={{ width: "100px" }} />
+              <col />
+              <col style={{ width: "140px" }} />
+              <col style={{ width: "150px" }} />
+            </colgroup>
+
             <thead>
               <tr>
                 <th
                   style={{
-                    textAlign: "left",
+                    textAlign: "center",
                     padding: "12px",
                     borderBottom: "2px solid #ccc",
-                    width: "100px",
                   }}
                 >
                   Positie
@@ -224,7 +231,6 @@ function Ranking() {
                     textAlign: "center",
                     padding: "12px",
                     borderBottom: "2px solid #ccc",
-                    width: "120px",
                   }}
                 >
                   Transfers
@@ -235,7 +241,6 @@ function Ranking() {
                     textAlign: "right",
                     padding: "12px",
                     borderBottom: "2px solid #ccc",
-                    width: "150px",
                   }}
                 >
                   Totaal
@@ -260,6 +265,7 @@ function Ranking() {
                       <td
                         style={{
                           padding: "12px",
+                          textAlign: "center",
                           borderBottom:
                             "1px solid #eee",
                           fontWeight:
@@ -274,6 +280,7 @@ function Ranking() {
                       <td
                         style={{
                           padding: "12px",
+                          textAlign: "left",
                           borderBottom:
                             "1px solid #eee",
                         }}
@@ -297,6 +304,7 @@ function Ranking() {
                             textDecoration:
                               "underline",
                             cursor: "pointer",
+                            textAlign: "left",
                           }}
                         >
                           {standing.userName}
