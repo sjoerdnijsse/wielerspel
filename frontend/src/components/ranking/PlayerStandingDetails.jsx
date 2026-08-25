@@ -260,24 +260,25 @@ function PlayerStandingDetails({
                                   style={{
                                     fontWeight: "bold",
                                     marginBottom: "8px",
+                                    textAlign: "left",
                                   }}
                                 >
-                                  Team in etappe{" "}
-                                  {stagePoint.stageNumber}
+                                  Team in etappe {stagePoint.stageNumber}
                                 </div>
 
                                 {stagePoint.cyclists.map(
                                   (cyclist) => (
                                     <div
-                                        key={cyclist.competitionCyclistId}
-                                        style={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: "10px",
-                                          padding: "7px 0",
-                                          borderBottom: "1px solid #eee",
-                                        }}
-                                      >
+                                      key={cyclist.competitionCyclistId}
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
+                                        padding: "7px 0",
+                                        borderBottom: "1px solid #eee",
+                                        width: "100%",
+                                      }}
+                                    >
                                       <div
                                         style={{
                                           display: "flex",
@@ -329,7 +330,9 @@ function PlayerStandingDetails({
                                       <strong
                                         style={{
                                           whiteSpace: "nowrap",
-                                          marginLeft: "8px",
+                                          marginLeft: "auto",
+                                          textAlign: "right",
+                                          minWidth: "70px",
                                         }}
                                       >
                                         {cyclist.points} pnt
