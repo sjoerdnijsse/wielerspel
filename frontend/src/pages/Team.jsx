@@ -472,7 +472,42 @@ async function handleConfirmTransfers() {
     transferAvailableBudget -
     transferIncomingTotal;
 
-  function canAffordIncomingCyclist(
+  const nextTransferStage = useMemo(() => {
+    if (!teamData?.teamLocked || stages.length === 0) {
+      return null;
+    }
+
+    const now = Date.now();
+
+    for (let index = 1; index < stages.length; index++) {
+      const previousStage = stages[index - 1];
+      const stage = stages[index];
+
+      if (!previousStage.resultsPublished) {
+        continue;
+      }
+
+      if (!stage.startTime) {
+        continue;
+      }
+
+      const stageStartTime =
+        new Date(stage.startTime).getTime();
+
+      if (
+        Number.isNaN(stageStartTime) ||
+        stageStartTime <= now
+      ) {
+        continue;
+      }
+
+      return stage;
+    }
+
+    return null;
+  }, [stages, teamData?.teamLocked]);
+  
+    function canAffordIncomingCyclist(
     cyclist,
     currentSelectionId
   ) {
@@ -501,15 +536,24 @@ async function handleConfirmTransfers() {
       
       <h2>Mijn ploeg</h2>
 
-      {!teamData?.teamLocked &&
-      firstStageStartTime && (
-        <Countdown
-          targetDate={firstStageStartTime}
-        />
-    )}
+        {!teamData?.teamLocked &&
+          firstStageStartTime && (
+            <Countdown
+              targetDate={firstStageStartTime}
+            />
+          )}
 
- 
-      {error && (
+        {teamData?.teamLocked &&
+          nextTransferStage && (
+            <Countdown
+              targetDate={nextTransferStage.startTime}
+              label={`Transferdeadline voor etappe ${nextTransferStage.stageNumber}`}
+              finishedLabel="Transferdeadline verstreken"
+              finishedMessage={`Transfers tellen niet meer mee voor etappe ${nextTransferStage.stageNumber}.`}
+            />
+          )}
+
+        {error && (
         <p
           role="alert"
           style={{
@@ -580,7 +624,11 @@ async function handleConfirmTransfers() {
             onJokerChange={handleJokerChange}
             onSaveJokers={handleSaveJokers}
             onRemove={handleRemove}
-            onTransfer={handleTransferSelectionToggle}
+            onTransfer={
+              teamData.transfersAllowed
+                ? handleTransferSelectionToggle
+                : null
+            }
           />
 
           {!teamData.teamLocked && (
@@ -597,6 +645,28 @@ async function handleConfirmTransfers() {
             />
           )}
 
+                  {teamData.teamLocked &&
+          !teamData.transfersAllowed &&
+          teamData.transfersRemaining > 0 && (
+            <div
+              className="responsive-card"
+              style={{
+                marginTop: "25px",
+                marginBottom: "20px",
+                textAlign: "center",
+              }}
+            >
+              <strong>
+                Transfers tijdelijk gesloten
+              </strong>
+
+              <p style={{ marginBottom: 0 }}>
+                Transfers zijn weer mogelijk zodra de uitslag
+                van de huidige etappe is gepubliceerd.
+              </p>
+            </div>
+          )}
+          
           {teamData.teamLocked && (
             <section
               className="responsive-card"

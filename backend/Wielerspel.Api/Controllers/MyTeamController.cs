@@ -106,6 +106,16 @@ public class MyTeamController : ControllerBase
             0
         );
 
+        var hasUnpublishedStartedStage =
+            await HasUnpublishedStartedStage(
+                competitionId
+            );
+
+        var transfersAllowed =
+            IsTransferPeriodOpen(competition) &&
+            transfersRemaining > 0 &&
+            !hasUnpublishedStartedStage;
+
         return Ok(new
         {
             competitionId,
@@ -120,9 +130,7 @@ public class MyTeamController : ControllerBase
                 competition,
                 competitionUser
             ),
-            transfersAllowed =
-                IsTransferPeriodOpen(competition) &&
-                transfersRemaining > 0,
+            transfersAllowed,
             teamLockDate = competition.TeamLockDate,
             selectedCount = selectedCyclists.Count,
             totalPrice,

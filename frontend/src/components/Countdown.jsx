@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-function Countdown({ targetDate }) {
+function Countdown({
+  targetDate,
+  label = "Tijd tot de eerste etappe en ploegdeadline",
+  finishedLabel = "De wedstrijd is begonnen",
+  finishedMessage = "De ploegdeadline is verstreken.",
+}) {
   const targetTime = useMemo(() => {
     if (!targetDate) {
       return null;
@@ -45,11 +50,11 @@ function Countdown({ targetDate }) {
     return (
       <section className="home-countdown">
         <p className="home-countdown__label">
-          De wedstrijd is begonnen
+          {finishedLabel}
         </p>
 
         <strong className="home-countdown__started">
-          De ploegdeadline is verstreken.
+          {finishedMessage}
         </strong>
       </section>
     );
@@ -58,7 +63,7 @@ function Countdown({ targetDate }) {
   return (
     <section className="home-countdown">
       <p className="home-countdown__label">
-        Tijd tot de eerste etappe en ploegdeadline
+        {label}
       </p>
 
       <div className="home-countdown__grid">
@@ -89,7 +94,10 @@ function Countdown({ targetDate }) {
 function TimeBlock({ value, label }) {
   return (
     <div className="home-countdown__block">
-      <strong>{String(value).padStart(2, "0")}</strong>
+      <strong>
+        {String(value).padStart(2, "0")}
+      </strong>
+
       <span>{label}</span>
     </div>
   );
@@ -122,15 +130,19 @@ function calculateRemainingTime(targetTime) {
     days: Math.floor(
       difference / (1000 * 60 * 60 * 24)
     ),
+
     hours: Math.floor(
       (difference / (1000 * 60 * 60)) % 24
     ),
+
     minutes: Math.floor(
       (difference / (1000 * 60)) % 60
     ),
+
     seconds: Math.floor(
       (difference / 1000) % 60
     ),
+
     finished: false,
   };
 }
