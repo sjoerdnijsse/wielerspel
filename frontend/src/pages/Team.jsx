@@ -196,16 +196,25 @@ function Team() {
       return;
     }
 
-    if (teamData.teamLocked) {
+    const lateEntryCanSetJokers =
+      teamData.isLateEntry &&
+      !teamData.cyclists.some(
+        (cyclist) => cyclist.jokerStageId
+      );
+
+    if (
+      teamData.teamLocked &&
+      !lateEntryCanSetJokers
+    ) {
       setError(
         "De ploegdeadline is verstreken. Jokers kunnen niet meer worden gewijzigd."
       );
       return;
     }
 
-    if (stages.length < teamData.teamSize) {
+    if (jokerStages.length < teamData.teamSize) {
       setError(
-        `Er zijn minimaal ${teamData.teamSize} etappes nodig om iedere renner een unieke jokeretappe te geven.`
+        `Er zijn vanaf jouw instapmoment minimaal ${teamData.teamSize} etappes nodig om iedere renner een unieke jokeretappe te geven.`
       );
       return;
     }
@@ -531,6 +540,26 @@ async function handleConfirmTransfers() {
           budgetWithoutCurrentAssignment;
       }  
 
+  const jokerStages = useMemo(() => {
+    if (!teamData?.isLateEntry) {
+      return stages;
+    }
+
+    return stages.filter(
+      (stage) =>
+        stage.stageNumber >=
+        teamData.teamActiveFromStageNumber
+    );
+  }, [
+    stages,
+    teamData?.isLateEntry,
+    teamData?.teamActiveFromStageNumber,
+  ]);
+  
+  const isBuildingLateEntryTeam =
+  teamData?.isLateEntry &&
+  teamData.selectedCount < teamData.teamSize;
+
   return (
     <main className="page-container">
       
@@ -604,16 +633,50 @@ async function handleConfirmTransfers() {
             />
           </section>
 
+          {isBuildingLateEntryTeam && (
+            <div
+              className="responsive-card"
+              style={{
+                marginBottom: "20px",
+                textAlign: "center",
+              }}
+            >
+              <strong>
+                Stel je ploeg samen
+              </strong>
+
+              <p style={{ marginBottom: 0 }}>
+                Je bent na de start van de wedstrijd
+                ingestapt. Je ploeg telt mee vanaf etappe{" "}
+                <strong>
+                  {teamData.teamActiveFromStageNumber}
+                </strong>.
+              </p>
+            </div>
+          )}
+
           <TeamList
             cyclists={teamData.cyclists}
-            stages={stages}
+            stages={jokerStages}
             jokerSelections={jokerSelections}
             savingId={savingId}
             savingJokers={savingJokers}
             teamComplete={
               teamData.selectedCount === teamData.teamSize
             }
-            teamLocked={teamData.teamLocked}
+            teamLocked={
+                          teamData.teamLocked &&
+                          !isBuildingLateEntryTeam
+                        }
+                        canSetJokers={
+              !teamData.teamLocked ||
+              (
+                teamData.isLateEntry &&
+                !teamData.cyclists.some(
+                  (cyclist) => cyclist.jokerStageId
+                )
+              )
+            }
             transfersUsed={teamData.transfersUsed}
             maxTransfers={teamData.maxTransfers}
             selectedTransferSelectionIds={
@@ -631,7 +694,8 @@ async function handleConfirmTransfers() {
             }
           />
 
-          {!teamData.teamLocked && (
+          {(!teamData.teamLocked ||
+            isBuildingLateEntryTeam) && (
             <AvailableCyclists
               cyclists={filteredAvailableCyclists}
               search={search}
@@ -646,7 +710,8 @@ async function handleConfirmTransfers() {
           )}
 
                   {teamData.teamLocked &&
-          !teamData.transfersAllowed &&
+                    !isBuildingLateEntryTeam &&
+                    !teamData.transfersAllowed &&
           teamData.transfersRemaining > 0 && (
             <div
               className="responsive-card"
@@ -667,7 +732,8 @@ async function handleConfirmTransfers() {
             </div>
           )}
           
-          {teamData.teamLocked && (
+          {teamData.teamLocked &&
+            !isBuildingLateEntryTeam && (
             <section
               className="responsive-card"
               style={{

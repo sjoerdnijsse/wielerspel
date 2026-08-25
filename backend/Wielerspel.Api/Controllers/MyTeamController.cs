@@ -45,6 +45,23 @@ public class MyTeamController : ControllerBase
 
         if (competitionUser == null)
         {
+            var newPlayerLastCompletedStageNumber =
+                await _context.Stages
+                    .AsNoTracking()
+                    .Where(stage =>
+                        stage.CompetitionId == competitionId &&
+                        stage.ResultsPublished
+                    )
+                    .Select(stage => (int?)stage.StageNumber)
+                    .MaxAsync() ?? 0;
+
+            var newPlayerIsLateEntry =
+                IsTransferPeriodOpen(competition);
+
+            var newPlayerTeamActiveFromStageNumber =
+                newPlayerIsLateEntry
+                    ? newPlayerLastCompletedStageNumber + 1
+                    : 1;
             return Ok(new
             {
                 competitionId,
@@ -60,6 +77,9 @@ public class MyTeamController : ControllerBase
                     competitionUser: null
                 ),
                 transfersAllowed = IsTransferPeriodOpen(competition),
+                isLateEntry = newPlayerIsLateEntry,
+                teamActiveFromStageNumber =
+                    newPlayerTeamActiveFromStageNumber,
                 teamLockDate = competition.TeamLockDate,
                 selectedCount = 0,
                 totalPrice = 0,
@@ -111,6 +131,13 @@ public class MyTeamController : ControllerBase
                 competitionId
             );
 
+        var isLateEntry =
+            competitionUser.IsLateEntry;
+
+        var teamActiveFromStageNumber =
+            competitionUser.InitialTeamFromStageNumber
+            ?? 1;    
+
         var transfersAllowed =
             IsTransferPeriodOpen(competition) &&
             transfersRemaining > 0 &&
@@ -131,6 +158,8 @@ public class MyTeamController : ControllerBase
                 competitionUser
             ),
             transfersAllowed,
+            isLateEntry,
+            teamActiveFromStageNumber,
             teamLockDate = competition.TeamLockDate,
             selectedCount = selectedCyclists.Count,
             totalPrice,
@@ -162,10 +191,23 @@ public class MyTeamController : ControllerBase
                 x.UserId == userId
             );
 
-        if (IsTeamLocked(
-            competition,
-            existingCompetitionUser
-        ))
+        var isAfterTeamDeadline =
+            IsTransferPeriodOpen(competition);
+
+        var isLateEntryBuildingInitialTeam =
+            isAfterTeamDeadline &&
+            (
+                existingCompetitionUser == null ||
+                !existingCompetitionUser.TeamLocked
+            );
+
+        if (
+            IsTeamLocked(
+                competition,
+                existingCompetitionUser
+            ) &&
+            !isLateEntryBuildingInitialTeam
+        )
         {
             return BadRequest(
                 "De deadline voor het aanpassen van je ploeg is verstreken."
@@ -192,6 +234,46 @@ public class MyTeamController : ControllerBase
                 competitionId,
                 userId
             );
+
+            if (
+                    isLateEntryBuildingInitialTeam &&
+                    !competitionUser.IsLateEntry
+                )
+                {
+                    var lastPublishedStageNumber =
+                        await _context.Stages
+                            .AsNoTracking()
+                            .Where(stage =>
+                                stage.CompetitionId == competitionId &&
+                                stage.ResultsPublished
+                            )
+                            .Select(stage =>
+                                (int?)stage.StageNumber
+                            )
+                            .MaxAsync() ?? 0;
+
+                    var startedUnpublishedStageNumber =
+                        await _context.Stages
+                            .AsNoTracking()
+                            .Where(stage =>
+                                stage.CompetitionId == competitionId &&
+                                stage.StartTime.HasValue &&
+                                stage.StartTime.Value <= DateTime.UtcNow &&
+                                !stage.ResultsPublished
+                            )
+                            .Select(stage =>
+                                (int?)stage.StageNumber
+                            )
+                            .MaxAsync() ?? 0;
+
+                    competitionUser.IsLateEntry = true;
+
+                    competitionUser.InitialTeamFromStageNumber =
+                        Math.Max(
+                            lastPublishedStageNumber,
+                            startedUnpublishedStageNumber
+                        ) + 1;
+                }
 
         var alreadySelected =
             await _context.CompetitionUserCyclists
@@ -243,13 +325,89 @@ public class MyTeamController : ControllerBase
 
         _context.CompetitionUserCyclists.Add(selection);
 
+        var newSelectedCount =
+            currentTeam.Count + 1;
+
+        // Een late instromer die nu zijn volledige eerste
+        // ploeg heeft samengesteld, wordt vanaf de
+        // eerstvolgende geldige etappe actief.
+        if (
+            isLateEntryBuildingInitialTeam &&
+            newSelectedCount == competition.TeamSize
+        )
+        {
+            var teamActiveFromStageNumber =
+                competitionUser.InitialTeamFromStageNumber
+                ?? 1;
+
+            // Alle bestaande selectieplekken plus de zojuist
+            // toegevoegde laatste renner.
+            var completedTeamSelections =
+                currentTeam
+                    .Select(currentSelection => new
+                    {
+                        SelectionId =
+                            currentSelection.Id,
+
+                        CompetitionCyclistId =
+                            currentSelection
+                                .CompetitionCyclistId
+                    })
+                    .ToList();
+
+            completedTeamSelections.Add(
+                new
+                {
+                    SelectionId = selection.Id,
+                    CompetitionCyclistId =
+                        selection.CompetitionCyclistId
+                }
+            );
+
+            foreach (var teamSelection in
+                    completedTeamSelections)
+            {
+                _context
+                    .CompetitionUserCyclistHistories
+                    .Add(
+                        new CompetitionUserCyclistHistory
+                        {
+                            Id = Guid.NewGuid(),
+
+                            CompetitionUserCyclistId =
+                                teamSelection.SelectionId,
+
+                            CompetitionCyclistId =
+                                teamSelection
+                                    .CompetitionCyclistId,
+
+                            FromStageNumber =
+                                teamActiveFromStageNumber,
+
+                            ToStageNumber = null
+                        }
+                    );
+            }
+
+            // De eerste ploeg is nu definitief.
+            // Vanaf nu gelden de normale transferregels.
+            competitionUser.TeamLocked = true;
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new
         {
-            message = "Renner toegevoegd aan je ploeg",
-            selectedCount = currentTeam.Count + 1,
+            message =
+                isLateEntryBuildingInitialTeam &&
+                newSelectedCount == competition.TeamSize
+                    ? "Je ploeg is compleet en gaat in vanaf de eerstvolgende etappe."
+                    : "Renner toegevoegd aan je ploeg",
+
+            selectedCount = newSelectedCount,
+
             totalPrice = newTotalPrice,
+
             remainingBudget =
                 competition.Budget - newTotalPrice
         });
@@ -285,10 +443,17 @@ public class MyTeamController : ControllerBase
             );
         }
 
-        if (IsTeamLocked(
-            competition,
-            competitionUser
-        ))
+        var isLateEntryBuildingInitialTeam =
+            competitionUser.IsLateEntry &&
+            !competitionUser.TeamLocked;
+
+        if (
+            IsTeamLocked(
+                competition,
+                competitionUser
+            ) &&
+            !isLateEntryBuildingInitialTeam
+        )
         {
             return BadRequest(
                 "De deadline voor het aanpassen van je ploeg is verstreken."
@@ -348,10 +513,18 @@ public class MyTeamController : ControllerBase
             );
         }
 
-        if (IsTeamLocked(
-            competition,
-            competitionUser
-        ))
+        var lateEntryCanSetJokers =
+            competitionUser.IsLateEntry &&
+            competitionUser.TeamLocked &&
+            competitionUser.InitialTeamFromStageNumber.HasValue;
+
+        if (
+            IsTeamLocked(
+                competition,
+                competitionUser
+            ) &&
+            !lateEntryCanSetJokers
+        )
         {
             return BadRequest(
                 "Jokers kunnen alleen vóór de ploegdeadline worden ingesteld."
@@ -371,6 +544,18 @@ public class MyTeamController : ControllerBase
                 $"Je hebt {teamSelections.Count} van de {competition.TeamSize} renners geselecteerd."
             );
         }
+
+        if (
+                competitionUser.IsLateEntry &&
+                teamSelections.Any(selection =>
+                    selection.JokerStageId.HasValue
+                )
+            )
+            {
+                return BadRequest(
+                    "De jokerkeuzes zijn al vastgelegd en kunnen niet meer worden gewijzigd."
+                );
+            }
 
         if (request.Jokers == null)
         {
@@ -434,20 +619,28 @@ public class MyTeamController : ControllerBase
             .ToList();
 
         var validStageIds = await _context.Stages
-            .AsNoTracking()
-            .Where(stage =>
-                stage.CompetitionId == competitionId &&
-                submittedStageIds.Contains(stage.Id)
+        .AsNoTracking()
+        .Where(stage =>
+            stage.CompetitionId == competitionId &&
+            submittedStageIds.Contains(stage.Id) &&
+            (
+                !competitionUser.IsLateEntry ||
+                !competitionUser.InitialTeamFromStageNumber.HasValue ||
+                stage.StageNumber >=
+                    competitionUser.InitialTeamFromStageNumber.Value
             )
-            .Select(stage => stage.Id)
-            .ToListAsync();
+        )
+        .Select(stage => stage.Id)
+        .ToListAsync();
 
         if (validStageIds.Count != submittedStageIds.Count)
-        {
-            return BadRequest(
-                "Een of meer gekozen jokeretappes horen niet bij deze wedstrijd."
-            );
-        }
+            {
+                return BadRequest(
+                    competitionUser.IsLateEntry
+                        ? $"Kies alleen jokeretappes vanaf etappe {competitionUser.InitialTeamFromStageNumber}."
+                        : "Een of meer gekozen jokeretappes horen niet bij deze wedstrijd."
+                );
+            }
 
         var jokerStageBySelectionId = request.Jokers
             .ToDictionary(

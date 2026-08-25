@@ -6,6 +6,7 @@ function TeamList({
   savingJokers,
   teamComplete,
   teamLocked,
+  canSetJokers,
   transfersUsed,
   maxTransfers,
   selectedTransferSelectionIds,
@@ -126,14 +127,14 @@ function TeamList({
         </p>
       )}
 
-      {!teamLocked && !teamComplete && (
+      {!teamComplete && (
         <p>
           Zodra je ploeg compleet is, kun je voor iedere
           renner een unieke jokeretappe kiezen.
         </p>
       )}
 
-      {!teamLocked && teamComplete && (
+      {teamComplete && canSetJokers && (
         <p>
           Kies voor iedere renner één jokeretappe. Iedere
           etappe mag maar één keer worden gebruikt.
@@ -142,10 +143,10 @@ function TeamList({
         </p>
       )}
 
-      {teamLocked && teamComplete && (
+      {teamComplete && !canSetJokers && (
         <p>
-          De jokerkeuzes zijn definitief en kunnen na de
-          ploegdeadline niet meer worden gewijzigd.
+          De jokerkeuzes zijn definitief en kunnen niet
+          meer worden gewijzigd.
         </p>
       )}
 
@@ -239,7 +240,7 @@ function TeamList({
 
               {teamComplete && (
                 <div className="team-list__joker">
-                  {!teamLocked ? (
+                  {canSetJokers ? (
                     <label>
                       <span className="team-list__label">
                         Joker
@@ -313,7 +314,7 @@ function TeamList({
         })}
       </ul>
 
-      {!teamLocked && teamComplete && (
+      {teamComplete && canSetJokers && (
         <div
           className="responsive-actions"
           style={{

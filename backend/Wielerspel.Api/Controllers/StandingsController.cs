@@ -646,7 +646,7 @@ public class StandingsController : ControllerBase
                     var activeCompetitionCyclistId =
                         selection.CompetitionCyclistId;
 
-                    if (histories != null)
+                    if (histories != null && histories.Count > 0)
                     {
                         var activeHistory =
                             histories.FirstOrDefault(history =>
@@ -659,12 +659,15 @@ public class StandingsController : ControllerBase
                                 )
                             );
 
-                        if (activeHistory != null)
+                        if (activeHistory == null)
                         {
-                            activeCompetitionCyclistId =
-                                activeHistory
-                                    .CompetitionCyclistId;
+                            // Deze selectie was tijdens deze etappe
+                            // nog niet actief.
+                            continue;
                         }
+
+                        activeCompetitionCyclistId =
+                            activeHistory.CompetitionCyclistId;
                     }
 
                     var cyclistStageResultPoints =
@@ -839,7 +842,7 @@ public class StandingsController : ControllerBase
                 var activeCompetitionCyclistId =
                     selection.CompetitionCyclistId;
 
-                if (histories != null)
+                if (histories != null && histories.Count > 0)
                 {
                     var activeHistory =
                         histories.FirstOrDefault(history =>
@@ -852,12 +855,13 @@ public class StandingsController : ControllerBase
                             )
                         );
 
-                    if (activeHistory != null)
+                    if (activeHistory == null)
                     {
-                        activeCompetitionCyclistId =
-                            activeHistory
-                                .CompetitionCyclistId;
+                        continue;
                     }
+
+                    activeCompetitionCyclistId =
+                        activeHistory.CompetitionCyclistId;
                 }
 
                 var cyclistStagePoints =
@@ -1107,6 +1111,18 @@ public class StandingsController : ControllerBase
                             item.ToStageNumber.Value
                     )
                 );
+
+            // Als deze selectie historie heeft, maar nog geen
+            // actieve periode voor deze etappe, bestond de
+            // selectie op dat moment nog niet.
+            // Dit geldt bijvoorbeeld voor een late instromer.
+            if (
+                historyList.Count > 0 &&
+                history.CompetitionCyclistId == Guid.Empty
+            )
+            {
+                continue;
+            }
 
             var activeCompetitionCyclistId =
                 history.CompetitionCyclistId != Guid.Empty

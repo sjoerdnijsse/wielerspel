@@ -12,6 +12,10 @@ public class CompetitionUser
 
     public bool TeamLocked { get; set; }
 
+    public bool IsLateEntry { get; set; }
+
+    public int? InitialTeamFromStageNumber { get; set; }
+
     public Competition Competition { get; set; } = null!;
 
     public User User { get; set; } = null!;
