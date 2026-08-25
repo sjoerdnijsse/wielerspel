@@ -244,8 +244,7 @@ function PlayerStandingDetails({
                             <td
                               colSpan={2}
                               style={{
-                                padding:
-                                  "0 10px 16px 28px",
+                                padding: "0 0 16px 0",
                                 borderBottom:
                                   "1px solid #eee",
                               }}
@@ -270,20 +269,15 @@ function PlayerStandingDetails({
                                 {stagePoint.cyclists.map(
                                   (cyclist) => (
                                     <div
-                                      key={
-                                        cyclist.competitionCyclistId
-                                      }
-                                      style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent:
-                                          "space-between",
-                                        gap: "12px",
-                                        padding: "7px 0",
-                                        borderBottom:
-                                          "1px solid #eee",
-                                      }}
-                                    >
+                                        key={cyclist.competitionCyclistId}
+                                        style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: "10px",
+                                          padding: "7px 0",
+                                          borderBottom: "1px solid #eee",
+                                        }}
+                                      >
                                       <div
                                         style={{
                                           display: "flex",
@@ -334,8 +328,8 @@ function PlayerStandingDetails({
 
                                       <strong
                                         style={{
-                                          whiteSpace:
-                                            "nowrap",
+                                          whiteSpace: "nowrap",
+                                          marginLeft: "8px",
                                         }}
                                       >
                                         {cyclist.points} pnt
@@ -382,7 +376,12 @@ function PlayerStandingDetails({
 
         {playerDetails.teamVisible &&
           playerDetails.cyclists?.length > 0 && (
-            <div style={{ overflowX: "auto" }}>
+            <div
+              style={{
+                width: "100%",
+                overflowX: "hidden",
+              }}
+            >
               <table
                 style={{
                   width: "100%",
@@ -395,30 +394,17 @@ function PlayerStandingDetails({
                       style={{
                         padding: "10px",
                         textAlign: "left",
-                        borderBottom:
-                          "2px solid #ccc",
+                        borderBottom: "2px solid #ccc",
                       }}
                     >
-                      Renner
+                      Renner / ploeg
                     </th>
 
                     <th
                       style={{
                         padding: "10px",
                         textAlign: "left",
-                        borderBottom:
-                          "2px solid #ccc",
-                      }}
-                    >
-                      Ploeg
-                    </th>
-
-                    <th
-                      style={{
-                        padding: "10px",
-                        textAlign: "left",
-                        borderBottom:
-                          "2px solid #ccc",
+                        borderBottom: "2px solid #ccc",
                       }}
                     >
                       Joker
@@ -428,8 +414,7 @@ function PlayerStandingDetails({
                       style={{
                         padding: "10px",
                         textAlign: "right",
-                        borderBottom:
-                          "2px solid #ccc",
+                        borderBottom: "2px solid #ccc",
                       }}
                     >
                       Prijs
@@ -448,8 +433,7 @@ function PlayerStandingDetails({
                         <td
                           style={{
                             padding: "10px",
-                            borderBottom:
-                              "1px solid #eee",
+                            borderBottom: "1px solid #eee",
                           }}
                         >
                           <div
@@ -457,14 +441,11 @@ function PlayerStandingDetails({
                               display: "flex",
                               alignItems: "center",
                               gap: "10px",
-                              minWidth: "160px",
                             }}
                           >
                             {cyclist.jerseyImageUrl && (
                               <img
-                                src={
-                                  cyclist.jerseyImageUrl
-                                }
+                                src={cyclist.jerseyImageUrl}
                                 alt=""
                                 style={{
                                   width: "32px",
@@ -475,23 +456,27 @@ function PlayerStandingDetails({
                               />
                             )}
 
-                            <span>
-                              {cyclist.cyclistName}{" "}
-                              <strong>
-                                ({cyclist.points ?? 0} pnt)
-                              </strong>
-                            </span>
-                          </div>
-                        </td>
+                            <div>
+                              <div>
+                                <strong>
+                                  {cyclist.cyclistName}
+                                </strong>{" "}
+                                <strong>
+                                  ({cyclist.points ?? 0} pnt)
+                                </strong>
+                              </div>
 
-                        <td
-                          style={{
-                            padding: "10px",
-                            borderBottom:
-                              "1px solid #eee",
-                          }}
-                        >
-                          {cyclist.teamName || "-"}
+                              <div
+                                style={{
+                                  marginTop: "2px",
+                                  fontSize: "0.9em",
+                                  color: "#666",
+                                }}
+                              >
+                                {cyclist.teamName || "-"}
+                              </div>
+                            </div>
+                          </div>
                         </td>
 
                         <td
