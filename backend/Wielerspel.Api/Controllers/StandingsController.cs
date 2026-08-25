@@ -580,6 +580,48 @@ public class StandingsController : ControllerBase
                 )
                 .ToList();
 
+        var cyclistDetailsByCompetitionCyclistId =
+            await _context.CompetitionCyclists
+                .AsNoTracking()
+                .Where(competitionCyclist =>
+                    relevantCyclistIds.Contains(
+                        competitionCyclist.Id
+                    )
+                )
+                .Select(competitionCyclist => new
+                {
+                    competitionCyclist.Id,
+
+                    CyclistName =
+                        competitionCyclist
+                            .Cyclist
+                            .Name,
+
+                    TeamName =
+                        competitionCyclist
+                            .Cyclist
+                            .Team != null
+                            ? competitionCyclist
+                                .Cyclist
+                                .Team!
+                                .Name
+                            : string.Empty,
+
+                    JerseyImageUrl =
+                        competitionCyclist
+                            .Cyclist
+                            .Team != null
+                            ? competitionCyclist
+                                .Cyclist
+                                .Team!
+                                .JerseyImageUrl
+                            : null
+                })
+                .ToDictionaryAsync(
+                    competitionCyclist =>
+                        competitionCyclist.Id
+                );
+        
         var stagePoints = publishedStages
             .Select(stage =>
             {
@@ -590,6 +632,9 @@ public class StandingsController : ControllerBase
                 var greenPoints = 0;
                 var polkaDotPoints = 0;
                 var whitePoints = 0;
+
+                var stageCyclists =
+                    new List<StageCyclistPointsDto>();
 
                 foreach (var selection in playerSelections)
                 {
@@ -622,7 +667,7 @@ public class StandingsController : ControllerBase
                         }
                     }
 
-                    var cyclistStagePoints =
+                    var cyclistStageResultPoints =
                         stageResultPointsByCyclistAndStage
                             .GetValueOrDefault(
                                 (
@@ -631,12 +676,13 @@ public class StandingsController : ControllerBase
                                 )
                             );
 
-                    stageResultPoints +=
-                        cyclistStagePoints;
+                    var cyclistTotalPoints =
+                        cyclistStageResultPoints;
 
-                    // De joker blijft aan de vaste selectieplek
-                    // gekoppeld. Alleen de renner die op dat
-                    // moment op die plek zit krijgt de bonus.
+                    stageResultPoints +=
+                        cyclistStageResultPoints;
+
+                    // Jokerbonus
                     if (
                         selection.JokerStageId.HasValue &&
                         selection.JokerStageId.Value ==
@@ -644,9 +690,13 @@ public class StandingsController : ControllerBase
                     )
                     {
                         jokerPoints +=
-                            cyclistStagePoints;
+                            cyclistStageResultPoints;
+
+                        cyclistTotalPoints +=
+                            cyclistStageResultPoints;
                     }
 
+                    // Gele trui
                     if (
                         stage
                             .YellowJerseyCompetitionCyclistId ==
@@ -655,8 +705,12 @@ public class StandingsController : ControllerBase
                     {
                         yellowPoints +=
                             YellowJerseyPoints;
+
+                        cyclistTotalPoints +=
+                            YellowJerseyPoints;
                     }
 
+                    // Groene trui
                     if (
                         stage
                             .GreenJerseyCompetitionCyclistId ==
@@ -665,8 +719,12 @@ public class StandingsController : ControllerBase
                     {
                         greenPoints +=
                             GreenJerseyPoints;
+
+                        cyclistTotalPoints +=
+                            GreenJerseyPoints;
                     }
 
+                    // Bollentrui
                     if (
                         stage
                             .PolkaDotJerseyCompetitionCyclistId ==
@@ -675,8 +733,12 @@ public class StandingsController : ControllerBase
                     {
                         polkaDotPoints +=
                             PolkaDotJerseyPoints;
+
+                        cyclistTotalPoints +=
+                            PolkaDotJerseyPoints;
                     }
 
+                    // Witte trui
                     if (
                         stage
                             .WhiteJerseyCompetitionCyclistId ==
@@ -685,12 +747,45 @@ public class StandingsController : ControllerBase
                     {
                         whitePoints +=
                             WhiteJerseyPoints;
+
+                        cyclistTotalPoints +=
+                            WhiteJerseyPoints;
+                    }
+
+                    if (
+                        cyclistDetailsByCompetitionCyclistId
+                            .TryGetValue(
+                                activeCompetitionCyclistId,
+                                out var cyclistDetails
+                            )
+                    )
+                    {
+                        stageCyclists.Add(
+                            new StageCyclistPointsDto
+                            {
+                                CompetitionCyclistId =
+                                    activeCompetitionCyclistId,
+
+                                CyclistName =
+                                    cyclistDetails.CyclistName,
+
+                                TeamName =
+                                    cyclistDetails.TeamName,
+
+                                JerseyImageUrl =
+                                    cyclistDetails.JerseyImageUrl,
+
+                                Points =
+                                    cyclistTotalPoints
+                            }
+                        );
                     }
                 }
 
                 return new StageStandingPointsDto
                 {
-                    StageId = stage.StageId,
+                    StageId =
+                        stage.StageId,
 
                     StageNumber =
                         stage.StageNumber,
@@ -714,7 +809,17 @@ public class StandingsController : ControllerBase
                         polkaDotPoints,
 
                     WhiteJerseyPoints =
-                        whitePoints
+                        whitePoints,
+
+                    Cyclists =
+                        stageCyclists
+                            .OrderByDescending(cyclist =>
+                                cyclist.Points
+                            )
+                            .ThenBy(cyclist =>
+                                cyclist.CyclistName
+                            )
+                            .ToList()
                 };
             })
             .ToList();

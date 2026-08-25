@@ -1,9 +1,21 @@
+import { Fragment, useState } from "react";
+
 function PlayerStandingDetails({
   playerDetails,
   loading,
   error,
   onClose,
 }) {
+  const [expandedStageId, setExpandedStageId] =
+    useState(null);
+
+  function toggleStage(stageId) {
+    setExpandedStageId((currentStageId) =>
+      currentStageId === stageId
+        ? null
+        : stageId
+    );
+  }
   if (loading) {
     return (
       <section
@@ -157,33 +169,187 @@ function PlayerStandingDetails({
 
               <tbody>
                 {playerDetails.stagePoints.map(
-                  (stagePoint) => (
-                    <tr key={stagePoint.stageId}>
-                      <td
-                        style={{
-                          padding: "10px",
-                          borderBottom:
-                            "1px solid #eee",
-                        }}
-                      >
-                        Etappe{" "}
-                        {stagePoint.stageNumber}
-                      </td>
+                  (stagePoint) => {
+                    const isExpanded =
+                      expandedStageId ===
+                      stagePoint.stageId;
 
-                      <td
-                        style={{
-                          padding: "10px",
-                          textAlign: "right",
-                          borderBottom: "1px solid #eee",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {stagePoint.noResult
-                          ? "Geen uitslag"
-                          : stagePoint.points}
-                      </td>
-                    </tr>
-                  )
+                    const canExpand =
+                      !stagePoint.noResult &&
+                      stagePoint.cyclists?.length > 0;
+
+                    return (
+                      <Fragment key={stagePoint.stageId}>
+                        <tr>
+                          <td
+                            style={{
+                              padding: "10px",
+                              borderBottom:
+                                isExpanded
+                                  ? "none"
+                                  : "1px solid #eee",
+                            }}
+                          >
+                            {canExpand ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleStage(
+                                    stagePoint.stageId
+                                  )
+                                }
+                                style={{
+                                  padding: 0,
+                                  minHeight: 0,
+                                  border: "none",
+                                  background: "none",
+                                  font: "inherit",
+                                  fontWeight: "bold",
+                                  textDecoration:
+                                    "underline",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {isExpanded ? "▾" : "▸"}{" "}
+                                Etappe{" "}
+                                {stagePoint.stageNumber}
+                              </button>
+                            ) : (
+                              <>
+                                Etappe{" "}
+                                {stagePoint.stageNumber}
+                              </>
+                            )}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: "10px",
+                              textAlign: "right",
+                              borderBottom:
+                                isExpanded
+                                  ? "none"
+                                  : "1px solid #eee",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {stagePoint.noResult
+                              ? "Geen uitslag"
+                              : stagePoint.points}
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr>
+                            <td
+                              colSpan={2}
+                              style={{
+                                padding:
+                                  "0 10px 16px 28px",
+                                borderBottom:
+                                  "1px solid #eee",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  padding: "12px",
+                                  background: "#fafafa",
+                                  borderRadius: "8px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontWeight: "bold",
+                                    marginBottom: "8px",
+                                  }}
+                                >
+                                  Team in etappe{" "}
+                                  {stagePoint.stageNumber}
+                                </div>
+
+                                {stagePoint.cyclists.map(
+                                  (cyclist) => (
+                                    <div
+                                      key={
+                                        cyclist.competitionCyclistId
+                                      }
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent:
+                                          "space-between",
+                                        gap: "12px",
+                                        padding: "7px 0",
+                                        borderBottom:
+                                          "1px solid #eee",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: "8px",
+                                          minWidth: 0,
+                                        }}
+                                      >
+                                        {cyclist.jerseyImageUrl && (
+                                          <img
+                                            src={
+                                              cyclist.jerseyImageUrl
+                                            }
+                                            alt=""
+                                            style={{
+                                              width: "24px",
+                                              height: "30px",
+                                              objectFit:
+                                                "contain",
+                                              flexShrink: 0,
+                                            }}
+                                          />
+                                        )}
+
+                                        <div
+                                          style={{
+                                            minWidth: 0,
+                                          }}
+                                        >
+                                          <div>
+                                            {
+                                              cyclist.cyclistName
+                                            }
+                                          </div>
+
+                                          <div
+                                            style={{
+                                              fontSize:
+                                                "0.85em",
+                                              color: "#666",
+                                            }}
+                                          >
+                                            {cyclist.teamName ||
+                                              "-"}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <strong
+                                        style={{
+                                          whiteSpace:
+                                            "nowrap",
+                                        }}
+                                      >
+                                        {cyclist.points} pnt
+                                      </strong>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  }
                 )}
               </tbody>
             </table>

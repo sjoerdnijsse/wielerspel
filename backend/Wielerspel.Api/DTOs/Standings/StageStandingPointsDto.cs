@@ -20,6 +20,9 @@ public class StageStandingPointsDto
 
     public int WhiteJerseyPoints { get; set; }
 
+    public List<StageCyclistPointsDto> Cyclists { get; set; }
+        = new List<StageCyclistPointsDto>();
+
     public int Points =>
         StageResultPoints +
         JokerPoints +
