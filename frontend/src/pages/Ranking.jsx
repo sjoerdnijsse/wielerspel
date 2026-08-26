@@ -194,15 +194,9 @@ function Ranking() {
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              tableLayout: "fixed",
+              minWidth: "560px",
             }}
           >
-            <colgroup>
-              <col style={{ width: "100px" }} />
-              <col />
-              <col style={{ width: "140px" }} />
-              <col style={{ width: "150px" }} />
-            </colgroup>
 
             <thead>
               <tr>
