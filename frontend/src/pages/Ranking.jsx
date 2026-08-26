@@ -186,7 +186,7 @@ function Ranking() {
       {!loading && standings.length > 0 && (
         <div
           style={{
-            overflowX: "auto",
+            width: "100%",
             marginTop: "20px",
           }}
         >
@@ -194,17 +194,16 @@ function Ranking() {
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              minWidth: "560px",
             }}
           >
-
             <thead>
               <tr>
                 <th
                   style={{
                     textAlign: "center",
-                    padding: "12px",
+                    padding: "12px 6px",
                     borderBottom: "2px solid #ccc",
+                    width: "55px",
                   }}
                 >
                   Positie
@@ -213,7 +212,7 @@ function Ranking() {
                 <th
                   style={{
                     textAlign: "left",
-                    padding: "12px",
+                    padding: "12px 6px",
                     borderBottom: "2px solid #ccc",
                   }}
                 >
@@ -223,8 +222,9 @@ function Ranking() {
                 <th
                   style={{
                     textAlign: "center",
-                    padding: "12px",
+                    padding: "12px 6px",
                     borderBottom: "2px solid #ccc",
+                    width: "70px",
                   }}
                 >
                   Transfers
@@ -233,8 +233,9 @@ function Ranking() {
                 <th
                   style={{
                     textAlign: "right",
-                    padding: "12px",
+                    padding: "12px 6px",
                     borderBottom: "2px solid #ccc",
+                    width: "60px",
                   }}
                 >
                   Totaal
@@ -258,7 +259,7 @@ function Ranking() {
                     >
                       <td
                         style={{
-                          padding: "12px",
+                          padding: "12px 6px",
                           textAlign: "center",
                           borderBottom:
                             "1px solid #eee",
@@ -273,10 +274,11 @@ function Ranking() {
 
                       <td
                         style={{
-                          padding: "12px",
+                          padding: "12px 6px",
                           textAlign: "left",
                           borderBottom:
                             "1px solid #eee",
+                          minWidth: 0,
                         }}
                       >
                         <button
@@ -299,6 +301,8 @@ function Ranking() {
                               "underline",
                             cursor: "pointer",
                             textAlign: "left",
+                            maxWidth: "100%",
+                            overflowWrap: "anywhere",
                           }}
                         >
                           {standing.userName}
@@ -307,10 +311,11 @@ function Ranking() {
 
                       <td
                         style={{
-                          padding: "12px",
+                          padding: "12px 6px",
                           textAlign: "center",
                           borderBottom:
                             "1px solid #eee",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {standing.transfersUsed ?? 0}
@@ -318,11 +323,12 @@ function Ranking() {
 
                       <td
                         style={{
-                          padding: "12px",
+                          padding: "12px 6px",
                           textAlign: "right",
                           borderBottom:
                             "1px solid #eee",
                           fontWeight: "bold",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {standing.totalPoints}
@@ -334,7 +340,7 @@ function Ranking() {
                         <td
                           colSpan={4}
                           style={{
-                            padding: "0 12px 16px",
+                            padding: "0 6px 16px",
                             borderBottom:
                               "1px solid #ddd",
                             background: "#fafafa",
