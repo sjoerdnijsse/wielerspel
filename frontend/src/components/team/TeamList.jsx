@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 function TeamList({
   cyclists,
   stages,
@@ -23,6 +25,64 @@ function TeamList({
   const selectedJokerStageIds = new Set(
     Object.values(jokerSelections).filter(Boolean)
   );
+
+  // Houd bij welke complete jokerselectie al automatisch
+  // is opgeslagen. Zo wordt dezelfde selectie na een reload
+  // niet opnieuw opgeslagen.
+  const lastSavedJokerSelection = useRef("");
+
+  useEffect(() => {
+    if (
+      !teamComplete ||
+      !canSetJokers ||
+      savingJokers ||
+      cyclists.length === 0
+    ) {
+      return;
+    }
+
+    const jokerStageIds = cyclists.map(
+      (cyclist) =>
+        jokerSelections[cyclist.selectionId] ?? ""
+    );
+
+    // Nog niet voor iedere renner een joker gekozen.
+    if (jokerStageIds.some((stageId) => !stageId)) {
+      return;
+    }
+
+    // Iedere jokeretappe moet uniek zijn.
+    const uniqueStageIds = new Set(jokerStageIds);
+
+    if (uniqueStageIds.size !== jokerStageIds.length) {
+      return;
+    }
+
+    const selectionKey = cyclists
+      .map((cyclist) => {
+        return `${cyclist.selectionId}:${jokerSelections[
+          cyclist.selectionId
+        ]}`;
+      })
+      .sort()
+      .join("|");
+
+    // Deze complete selectie is al opgeslagen.
+    if (lastSavedJokerSelection.current === selectionKey) {
+      return;
+    }
+
+    lastSavedJokerSelection.current = selectionKey;
+
+    onSaveJokers?.();
+  }, [
+    teamComplete,
+    canSetJokers,
+    savingJokers,
+    cyclists,
+    jokerSelections,
+    onSaveJokers,
+  ]);
 
   function handleAction(cyclist) {
     if (teamLocked) {
@@ -138,8 +198,8 @@ function TeamList({
         <p>
           Kies voor iedere renner één jokeretappe. Iedere
           etappe mag maar één keer worden gebruikt.
-          Vergeet de jokers niet op te slaan als je alles
-          hebt ingevuld.
+          De jokers worden automatisch opgeslagen zodra
+          je alles hebt ingevuld.
         </p>
       )}
 
@@ -147,6 +207,12 @@ function TeamList({
         <p>
           De jokerkeuzes zijn definitief en kunnen niet
           meer worden gewijzigd.
+        </p>
+      )}
+
+      {savingJokers && (
+        <p>
+          <strong>Jokers opslaan...</strong>
         </p>
       )}
 
@@ -313,25 +379,6 @@ function TeamList({
           );
         })}
       </ul>
-
-      {teamComplete && canSetJokers && (
-        <div
-          className="responsive-actions"
-          style={{
-            marginTop: "20px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={onSaveJokers}
-            disabled={savingJokers}
-          >
-            {savingJokers
-              ? "Jokers opslaan..."
-              : "Jokers opslaan"}
-          </button>
-        </div>
-      )}
     </section>
   );
 }

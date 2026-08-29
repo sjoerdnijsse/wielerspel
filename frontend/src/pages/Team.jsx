@@ -30,14 +30,14 @@ function Team() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [firstStageStartTime, setFirstStageStartTime] =
-  useState(null);
+    useState(null);
 
- const [
+  const [
     selectedTransferSelections,
     setSelectedTransferSelections,
   ] = useState([]);
 
- const [
+  const [
     transferAssignments,
     setTransferAssignments,
   ] = useState({});
@@ -56,38 +56,38 @@ function Team() {
   }, [competitionId]);
 
   async function loadCompetitions() {
-      setLoading(true);
-      setError("");
+    setLoading(true);
+    setError("");
 
-      try {
-        const data = await getCompetitions();
+    try {
+      const data = await getCompetitions();
 
-        const activeCompetition = data.find(
-          (competition) => competition.isActive
-        );
+      const activeCompetition = data.find(
+        (competition) => competition.isActive
+      );
 
-        if (activeCompetition) {
-          setCompetitionId(activeCompetition.id);
-        } else {
-          setCompetitionId("");
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error(error);
-        setError(error.message);
+      if (activeCompetition) {
+        setCompetitionId(activeCompetition.id);
+      } else {
+        setCompetitionId("");
         setLoading(false);
       }
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+      setLoading(false);
     }
+  }
 
   async function loadCompetitionData(
-      selectedCompetitionId,
-      showLoading = true
-    ) {
-      if (showLoading) {
-        setLoading(true);
-      }
+    selectedCompetitionId,
+    showLoading = true
+  ) {
+    if (showLoading) {
+      setLoading(true);
+    }
 
-      setError("");
+    setError("");
 
     try {
       const [competitionCyclists, myTeam, stageData] =
@@ -174,86 +174,98 @@ function Team() {
     }
   }
 
-  function handleJokerChange(selectionId, stageId) {
+  async function handleJokerChange(
+    selectionId,
+    stageId
+  ) {
     setError("");
     setMessage("");
 
-    setJokerSelections((current) => ({
-      ...current,
+    const updatedSelections = {
+      ...jokerSelections,
       [selectionId]: stageId,
-    }));
-  }
+    };
 
-  async function handleSaveJokers() {
+    setJokerSelections(updatedSelections);
+
     if (!teamData) {
       return;
     }
 
-    if (teamData.selectedCount !== teamData.teamSize) {
-      setError(
-        "Je ploeg moet compleet zijn voordat je jokers kunt opslaan."
-      );
-      return;
-    }
-
-    const lateEntryCanSetJokers =
-      teamData.isLateEntry &&
-      !teamData.cyclists.some(
-        (cyclist) => cyclist.jokerStageId
-      );
-
     if (
-      teamData.teamLocked &&
-      !lateEntryCanSetJokers
+      teamData.selectedCount !==
+      teamData.teamSize
     ) {
-      setError(
-        "De ploegdeadline is verstreken. Jokers kunnen niet meer worden gewijzigd."
-      );
       return;
     }
 
-    if (jokerStages.length < teamData.teamSize) {
-      setError(
-        `Er zijn vanaf jouw instapmoment minimaal ${teamData.teamSize} etappes nodig om iedere renner een unieke jokeretappe te geven.`
-      );
+    if (teamData.teamLocked) {
       return;
     }
 
-    const jokers = teamData.cyclists.map((cyclist) => ({
-      competitionUserCyclistId: cyclist.selectionId,
-      stageId: jokerSelections[cyclist.selectionId] ?? "",
-    }));
-
-    if (jokers.some((joker) => !joker.stageId)) {
-      setError(
-        "Selecteer voor iedere renner een jokeretappe."
-      );
-      return;
-    }
-
-    const uniqueStageIds = new Set(
-      jokers.map((joker) => joker.stageId)
+    const jokerStagesForTeam = teamData.cyclists.map(
+      (cyclist) => ({
+        competitionUserCyclistId:
+          cyclist.selectionId,
+        stageId:
+          updatedSelections[
+            cyclist.selectionId
+          ] ?? "",
+      })
     );
 
-    if (uniqueStageIds.size !== jokers.length) {
-      setError(
-        "Iedere etappe mag binnen je ploeg maar één keer als joker worden gebruikt."
-      );
+    // Nog niet alle jokers ingevuld.
+    if (
+      jokerStagesForTeam.some(
+        (joker) => !joker.stageId
+      )
+    ) {
+      return;
+    }
+
+    // Iedere etappe moet uniek zijn.
+    const uniqueStageIds = new Set(
+      jokerStagesForTeam.map(
+        (joker) => joker.stageId
+      )
+    );
+
+    if (
+      uniqueStageIds.size !==
+      jokerStagesForTeam.length
+    ) {
+      return;
+    }
+
+    // Controleer of alle gekozen etappes
+    // daadwerkelijk toegestane jokeretappes zijn.
+    const validJokerStageIds = new Set(
+      jokerStages.map((stage) => stage.id)
+    );
+
+    if (
+      jokerStagesForTeam.some(
+        (joker) =>
+          !validJokerStageIds.has(
+            joker.stageId
+          )
+      )
+    ) {
       return;
     }
 
     setSavingJokers(true);
-    setError("");
-    setMessage("");
 
     try {
-      const result = await saveCompetitionTeamJokers(
-        competitionId,
-        jokers
-      );
+      const result =
+        await saveCompetitionTeamJokers(
+          competitionId,
+          jokerStagesForTeam
+        );
 
       setMessage(
-        result.message ?? "De jokers zijn opgeslagen."
+        result.message ??
+          "De jokers zijn automatisch opgeslagen."
       );
 
       await loadCompetitionData(
@@ -268,39 +280,60 @@ function Team() {
     }
   }
 
-  function handleTransferSelectionToggle(cyclist) {
+  function handleTransferSelectionToggle(
+    cyclist
+  ) {
     setError("");
     setMessage("");
 
-    setSelectedTransferSelections((current) => {
-      const alreadySelected = current.some(
-        (item) => item.selectionId === cyclist.selectionId
-      );
+    setSelectedTransferSelections(
+      (current) => {
+        const alreadySelected =
+          current.some(
+            (item) =>
+              item.selectionId ===
+              cyclist.selectionId
+          );
 
-      if (alreadySelected) {
-        setTransferAssignments((assignments) => {
-          const updated = { ...assignments };
-          delete updated[cyclist.selectionId];
-          return updated;
-        });
+        if (alreadySelected) {
+          setTransferAssignments(
+            (assignments) => {
+              const updated = {
+                ...assignments,
+              };
 
-        return current.filter(
-          (item) => item.selectionId !== cyclist.selectionId
-        );
+              delete updated[
+                cyclist.selectionId
+              ];
+
+              return updated;
+            }
+          );
+
+          return current.filter(
+            (item) =>
+              item.selectionId !==
+              cyclist.selectionId
+          );
+        }
+
+        const transfersRemaining =
+          teamData?.transfersRemaining ?? 0;
+
+        if (
+          current.length >=
+          transfersRemaining
+        ) {
+          setError(
+            `Je kunt nog maximaal ${transfersRemaining} renner(s) vervangen.`
+          );
+
+          return current;
+        }
+
+        return [...current, cyclist];
       }
-
-      const transfersRemaining =
-        teamData?.transfersRemaining ?? 0;
-
-      if (current.length >= transfersRemaining) {
-        setError(
-          `Je kunt nog maximaal ${transfersRemaining} renner(s) vervangen.`
-        );
-        return current;
-      }
-
-      return [...current, cyclist];
-    });
+    );
   }
 
   function handleTransferAssignmentChange(
@@ -312,7 +345,8 @@ function Team() {
 
     setTransferAssignments((current) => ({
       ...current,
-      [selectionId]: incomingCompetitionCyclistId,
+      [selectionId]:
+        incomingCompetitionCyclistId,
     }));
   }
 
@@ -323,38 +357,48 @@ function Team() {
     setError("");
   }
 
-async function handleConfirmTransfers() {
-  if (!teamData) {
-    return;
-  }
+  async function handleConfirmTransfers() {
+    if (!teamData) {
+      return;
+    }
 
-  if (selectedTransferSelections.length === 0) {
-    setError(
-      "Selecteer eerst minimaal één renner die je wilt vervangen."
-    );
-    return;
-  }
+    if (
+      selectedTransferSelections.length ===
+      0
+    ) {
+      setError(
+        "Selecteer eerst minimaal één renner die je wilt vervangen."
+      );
+      return;
+    }
 
-  const missingAssignment =
-    selectedTransferSelections.some(
-      (selection) =>
-        !transferAssignments[selection.selectionId]
-    );
-
-  if (missingAssignment) {
-    setError(
-      "Kies voor iedere vrijgekomen plek een nieuwe renner."
-    );
-    return;
-  }
-
-  const incomingIds =
-      selectedTransferSelections.map(
+    const missingAssignment =
+      selectedTransferSelections.some(
         (selection) =>
-          transferAssignments[selection.selectionId]
+          !transferAssignments[
+            selection.selectionId
+          ]
       );
 
-    if (new Set(incomingIds).size !== incomingIds.length) {
+    if (missingAssignment) {
+      setError(
+        "Kies voor iedere vrijgekomen plek een nieuwe renner."
+      );
+      return;
+    }
+
+    const incomingIds =
+      selectedTransferSelections.map(
+        (selection) =>
+          transferAssignments[
+            selection.selectionId
+          ]
+      );
+
+    if (
+      new Set(incomingIds).size !==
+      incomingIds.length
+    ) {
       setError(
         "Dezelfde nieuwe renner kan niet op meerdere plekken worden gekozen."
       );
@@ -362,134 +406,169 @@ async function handleConfirmTransfers() {
     }
 
     if (transferBudgetRemaining < 0) {
-    setError(
-      `Je overschrijdt je budget met €${Math.abs(
-        transferBudgetRemaining
-      )} miljoen.`
-    );
-    return;
-  }
+      setError(
+        `Je overschrijdt je budget met €${Math.abs(
+          transferBudgetRemaining
+        )} miljoen.`
+      );
+      return;
+    }
 
-  const transfers = selectedTransferSelections.map(
-    (selection) => ({
-      competitionUserCyclistId: selection.selectionId,
-      incomingCompetitionCyclistId:
-        transferAssignments[selection.selectionId],
-    })
-  );
-
-  setSavingId("transfers");
-  setError("");
-  setMessage("");
-
-  try {
-    const result =
-      await transferCompetitionCyclists(
-        competitionId,
-        transfers
+    const transfers =
+      selectedTransferSelections.map(
+        (selection) => ({
+          competitionUserCyclistId:
+            selection.selectionId,
+          incomingCompetitionCyclistId:
+            transferAssignments[
+              selection.selectionId
+            ],
+        })
       );
 
-    setMessage(
-      result.message ??
-        "De transfers zijn uitgevoerd."
-    );
+    setSavingId("transfers");
+    setError("");
+    setMessage("");
 
-    setSelectedTransferSelections([]);
-    setTransferAssignments({});
-    setSearch("");
+    try {
+      const result =
+        await transferCompetitionCyclists(
+          competitionId,
+          transfers
+        );
 
-    await loadCompetitionData(
-      competitionId,
-      false
-    );
-  } catch (error) {
-    console.error(error);
-    setError(error.message);
-  } finally {
-    setSavingId(null);
+      setMessage(
+        result.message ??
+          "De transfers zijn uitgevoerd."
+      );
+
+      setSelectedTransferSelections([]);
+      setTransferAssignments({});
+      setSearch("");
+
+      await loadCompetitionData(
+        competitionId,
+        false
+      );
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    } finally {
+      setSavingId(null);
+    }
   }
-}
 
   const selectedIds = useMemo(() => {
     return new Set(
       teamData?.cyclists?.map(
-        (cyclist) => cyclist.competitionCyclistId
+        (cyclist) =>
+          cyclist.competitionCyclistId
       ) ?? []
     );
   }, [teamData]);
 
-  const filteredAvailableCyclists = useMemo(() => {
-    const value = search.trim().toLowerCase();
+  const filteredAvailableCyclists =
+    useMemo(() => {
+      const value = search
+        .trim()
+        .toLowerCase();
 
-    return availableCyclists
-      .filter((item) => !selectedIds.has(item.id))
-      .filter((item) => {
-        if (!value) {
-          return true;
-        }
+      return availableCyclists
+        .filter(
+          (item) =>
+            !selectedIds.has(item.id)
+        )
+        .filter((item) => {
+          if (!value) {
+            return true;
+          }
 
-        const teamName = item.cyclist.team?.name ?? "";
+          const teamName =
+            item.cyclist.team?.name ?? "";
 
-        return (
-          item.cyclist.name.toLowerCase().includes(value) ||
-          teamName.toLowerCase().includes(value)
+          return (
+            item.cyclist.name
+              .toLowerCase()
+              .includes(value) ||
+            teamName
+              .toLowerCase()
+              .includes(value)
+          );
+        });
+    }, [
+      availableCyclists,
+      selectedIds,
+      search,
+    ]);
+
+  const transferAvailableBudget =
+    useMemo(() => {
+      if (!teamData) {
+        return 0;
+      }
+
+      const releasedBudget =
+        selectedTransferSelections.reduce(
+          (total, cyclist) =>
+            total + cyclist.price,
+          0
         );
-      });
-  }, [availableCyclists, selectedIds, search]);
 
-  const transferAvailableBudget = useMemo(() => {
-    if (!teamData) {
-      return 0;
-    }
+      return (
+        teamData.remainingBudget +
+        releasedBudget
+      );
+    }, [
+      teamData,
+      selectedTransferSelections,
+    ]);
 
-    const releasedBudget =
-      selectedTransferSelections.reduce(
-        (total, cyclist) =>
-          total + cyclist.price,
+  const transferIncomingTotal =
+    useMemo(() => {
+      return Object.values(
+        transferAssignments
+      ).reduce(
+        (total, cyclistId) => {
+          const cyclist =
+            availableCyclists.find(
+              (item) =>
+                item.id === cyclistId
+            );
+
+          return (
+            total +
+            (cyclist?.price ?? 0)
+          );
+        },
         0
       );
-
-    return (
-      teamData.remainingBudget +
-      releasedBudget
-    );
-  }, [
-    teamData,
-    selectedTransferSelections,
-  ]);
-
-  const transferIncomingTotal = useMemo(() => {
-    return Object.values(
-      transferAssignments
-    ).reduce(
-      (total, cyclistId) => {
-        const cyclist =
-          availableCyclists.find(
-            (item) => item.id === cyclistId
-          );
-
-        return total + (cyclist?.price ?? 0);
-      },
-      0
-    );
-  }, [
-    transferAssignments,
-    availableCyclists,
-  ]);
+    }, [
+      transferAssignments,
+      availableCyclists,
+    ]);
 
   const transferBudgetRemaining =
     transferAvailableBudget -
     transferIncomingTotal;
 
   const nextTransferStage = useMemo(() => {
-    if (!teamData?.teamLocked || stages.length === 0) {
+    if (
+      !teamData?.teamLocked ||
+      stages.length === 0
+    ) {
       return null;
     }
 
     const now = Date.now();
 
-    for (let index = 1; index < stages.length; index++) {
-      const previousStage = stages[index - 1];
+    for (
+      let index = 1;
+      index < stages.length;
+      index++
+    ) {
+      const previousStage =
+        stages[index - 1];
+
       const stage = stages[index];
 
       if (!previousStage.resultsPublished) {
@@ -501,7 +580,9 @@ async function handleConfirmTransfers() {
       }
 
       const stageStartTime =
-        new Date(stage.startTime).getTime();
+        new Date(
+          stage.startTime
+        ).getTime();
 
       if (
         Number.isNaN(stageStartTime) ||
@@ -514,31 +595,39 @@ async function handleConfirmTransfers() {
     }
 
     return null;
-  }, [stages, teamData?.teamLocked]);
-  
-    function canAffordIncomingCyclist(
+  }, [
+    stages,
+    teamData?.teamLocked,
+  ]);
+
+  function canAffordIncomingCyclist(
     cyclist,
     currentSelectionId
   ) {
     const currentAssignedCyclistId =
-      transferAssignments[currentSelectionId];
+      transferAssignments[
+        currentSelectionId
+      ];
 
     const currentAssignedCyclist =
       availableCyclists.find(
         (item) =>
-          item.id === currentAssignedCyclistId
+          item.id ===
+          currentAssignedCyclistId
       );
 
     const currentAssignedPrice =
       currentAssignedCyclist?.price ?? 0;
 
     const budgetWithoutCurrentAssignment =
-          transferBudgetRemaining +
-          currentAssignedPrice;
+      transferBudgetRemaining +
+      currentAssignedPrice;
 
-        return cyclist.price <=
-          budgetWithoutCurrentAssignment;
-      }  
+    return (
+      cyclist.price <=
+      budgetWithoutCurrentAssignment
+    );
+  }
 
   const jokerStages = useMemo(() => {
     if (!teamData?.isLateEntry) {
@@ -555,34 +644,36 @@ async function handleConfirmTransfers() {
     teamData?.isLateEntry,
     teamData?.teamActiveFromStageNumber,
   ]);
-  
+
   const isBuildingLateEntryTeam =
-  teamData?.isLateEntry &&
-  teamData.selectedCount < teamData.teamSize;
+    teamData?.isLateEntry &&
+    teamData.selectedCount <
+      teamData.teamSize;
 
   return (
     <main className="page-container">
-      
       <h2>Mijn ploeg</h2>
 
-        {!teamData?.teamLocked &&
-          firstStageStartTime && (
-            <Countdown
-              targetDate={firstStageStartTime}
-            />
-          )}
+      {!teamData?.teamLocked &&
+        firstStageStartTime && (
+          <Countdown
+            targetDate={firstStageStartTime}
+          />
+        )}
 
-        {teamData?.teamLocked &&
-          nextTransferStage && (
-            <Countdown
-              targetDate={nextTransferStage.startTime}
-              label={`Transferdeadline voor etappe ${nextTransferStage.stageNumber}`}
-              finishedLabel="Transferdeadline verstreken"
-              finishedMessage={`Transfers tellen niet meer mee voor etappe ${nextTransferStage.stageNumber}.`}
-            />
-          )}
+      {teamData?.teamLocked &&
+        nextTransferStage && (
+          <Countdown
+            targetDate={
+              nextTransferStage.startTime
+            }
+            label={`Transferdeadline voor etappe ${nextTransferStage.stageNumber}`}
+            finishedLabel="Transferdeadline verstreken"
+            finishedMessage={`Transfers tellen niet meer mee voor etappe ${nextTransferStage.stageNumber}.`}
+          />
+        )}
 
-        {error && (
+      {error && (
         <p
           role="alert"
           style={{
@@ -645,12 +736,20 @@ async function handleConfirmTransfers() {
                 Stel je ploeg samen
               </strong>
 
-              <p style={{ marginBottom: 0 }}>
-                Je bent na de start van de wedstrijd
-                ingestapt. Je ploeg telt mee vanaf etappe{" "}
+              <p
+                style={{
+                  marginBottom: 0,
+                }}
+              >
+                Je bent na de start van de
+                wedstrijd ingestapt. Je ploeg
+                telt mee vanaf etappe{" "}
                 <strong>
-                  {teamData.teamActiveFromStageNumber}
-                </strong>.
+                  {
+                    teamData.teamActiveFromStageNumber
+                  }
+                </strong>
+                .
               </p>
             </div>
           )}
@@ -662,30 +761,38 @@ async function handleConfirmTransfers() {
             savingId={savingId}
             savingJokers={savingJokers}
             teamComplete={
-              teamData.selectedCount === teamData.teamSize
+              teamData.selectedCount ===
+              teamData.teamSize
             }
             teamLocked={
-                          teamData.teamLocked &&
-                          !isBuildingLateEntryTeam
-                        }
-                        canSetJokers={
+              teamData.teamLocked &&
+              !isBuildingLateEntryTeam
+            }
+            canSetJokers={
               !teamData.teamLocked ||
               (
                 teamData.isLateEntry &&
                 !teamData.cyclists.some(
-                  (cyclist) => cyclist.jokerStageId
+                  (cyclist) =>
+                    cyclist.jokerStageId
                 )
               )
             }
-            transfersUsed={teamData.transfersUsed}
-            maxTransfers={teamData.maxTransfers}
+            transfersUsed={
+              teamData.transfersUsed
+            }
+            maxTransfers={
+              teamData.maxTransfers
+            }
             selectedTransferSelectionIds={
               selectedTransferSelections.map(
-                (selection) => selection.selectionId
+                (selection) =>
+                  selection.selectionId
               )
             }
-            onJokerChange={handleJokerChange}
-            onSaveJokers={handleSaveJokers}
+            onJokerChange={
+              handleJokerChange
+            }
             onRemove={handleRemove}
             onTransfer={
               teamData.transfersAllowed
@@ -697,271 +804,347 @@ async function handleConfirmTransfers() {
           {(!teamData.teamLocked ||
             isBuildingLateEntryTeam) && (
             <AvailableCyclists
-              cyclists={filteredAvailableCyclists}
+              cyclists={
+                filteredAvailableCyclists
+              }
               search={search}
               onSearchChange={setSearch}
               savingId={savingId}
-              remainingBudget={teamData.remainingBudget}
-              selectedCount={teamData.selectedCount}
+              remainingBudget={
+                teamData.remainingBudget
+              }
+              selectedCount={
+                teamData.selectedCount
+              }
               teamSize={teamData.teamSize}
               transferMode={false}
               onAdd={handleAdd}
             />
           )}
 
-                  {teamData.teamLocked &&
-                    !isBuildingLateEntryTeam &&
-                    !teamData.transfersAllowed &&
-          teamData.transfersRemaining > 0 && (
-            <div
-              className="responsive-card"
-              style={{
-                marginTop: "25px",
-                marginBottom: "20px",
-                textAlign: "center",
-              }}
-            >
-              <strong>
-                Transfers tijdelijk gesloten
-              </strong>
-
-              <p style={{ marginBottom: 0 }}>
-                Transfers zijn weer mogelijk zodra de uitslag
-                van de huidige etappe is gepubliceerd.
-              </p>
-            </div>
-          )}
-          
           {teamData.teamLocked &&
-            !isBuildingLateEntryTeam && (
-            <section
-              className="responsive-card"
-              style={{
-                marginTop: "25px",
-                marginBottom: "25px",
-              }}
-            >
-              <h3 style={{ marginTop: 0 }}>
-                Transfers
-              </h3>
-
-              <p>
-                Selecteer in je ploeg één of meer renners die
-                je wilt vervangen. Daarna kies je per
-                vrijgekomen plek een nieuwe renner.
-              </p>
-
-              <p>
-                Transfers gebruikt:{" "}
-                <strong>
-                  {teamData.transfersUsed} /{" "}
-                  {teamData.maxTransfers}
-                </strong>
-              </p>
-
+            !isBuildingLateEntryTeam &&
+            !teamData.transfersAllowed &&
+            teamData.transfersRemaining >
+              0 && (
               <div
-                className="responsive-grid"
+                className="responsive-card"
                 style={{
-                  marginTop: "20px",
+                  marginTop: "25px",
                   marginBottom: "20px",
+                  textAlign: "center",
                 }}
               >
-                <Summary
-                  label="Beschikbaar voor transfers"
-                  value={`€${transferAvailableBudget}M`}
-                />
+                <strong>
+                  Transfers tijdelijk gesloten
+                </strong>
 
-                <Summary
-                  label="Nieuwe renners"
-                  value={`€${transferIncomingTotal}M`}
-                />
-
-                <Summary
-                  label="Budget over"
-                  value={`€${transferBudgetRemaining}M`}
-                />
-              </div>
-
-              {transferBudgetRemaining < 0 && (
                 <p
                   style={{
-                    color: "#b42318",
-                    fontWeight: "700",
+                    marginBottom: 0,
                   }}
                 >
-                  Je zit €{Math.abs(transferBudgetRemaining)}M
-                  boven je budget.
+                  Transfers zijn weer mogelijk
+                  zodra de uitslag van de
+                  huidige etappe is gepubliceerd.
                 </p>
-              )}
+              </div>
+            )}
 
-              {selectedTransferSelections.length === 0 && (
+          {teamData.teamLocked &&
+            !isBuildingLateEntryTeam && (
+              <section
+                className="responsive-card"
+                style={{
+                  marginTop: "25px",
+                  marginBottom: "25px",
+                }}
+              >
+                <h3
+                  style={{
+                    marginTop: 0,
+                  }}
+                >
+                  Transfers
+                </h3>
+
                 <p>
-                  Klik bij één of meer renners in je ploeg op{" "}
-                  <strong>Transfer</strong>.
+                  Selecteer in je ploeg één of
+                  meer renners die je wilt
+                  vervangen. Daarna kies je per
+                  vrijgekomen plek een nieuwe
+                  renner.
                 </p>
-              )}
 
-              {selectedTransferSelections.length > 0 && (
-                <>
-                  <h4>
-                    Geselecteerd voor transfer (
-                    {selectedTransferSelections.length})
-                  </h4>
+                <p>
+                  Transfers gebruikt:{" "}
+                  <strong>
+                    {teamData.transfersUsed} /{" "}
+                    {teamData.maxTransfers}
+                  </strong>
+                </p>
 
-                  {selectedTransferSelections.map(
-                    (selection) => {
-                      const currentAssignmentId =
-                        transferAssignments[
-                          selection.selectionId
-                        ] ?? "";
+                <div
+                  className="responsive-grid"
+                  style={{
+                    marginTop: "20px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <Summary
+                    label="Beschikbaar voor transfers"
+                    value={`€${transferAvailableBudget}M`}
+                  />
 
-                      const selectedIncomingIds =
-                        Object.values(
-                          transferAssignments
-                        );
+                  <Summary
+                    label="Nieuwe renners"
+                    value={`€${transferIncomingTotal}M`}
+                  />
 
-                      return (
-                        <div
-                          key={selection.selectionId}
-                          style={{
-                            padding: "15px 0",
-                            borderBottom: "1px solid #ddd",
-                          }}
-                        >
-                          <p
-                            style={{
-                              marginTop: 0,
-                              marginBottom: "6px",
-                            }}
-                          >
-                            <strong>
-                              {selection.name}
-                            </strong>{" "}
-                            — €{selection.price}M
-                          </p>
+                  <Summary
+                    label="Budget over"
+                    value={`€${transferBudgetRemaining}M`}
+                  />
+                </div>
 
-                          <p
-                            style={{
-                              marginTop: 0,
-                            }}
-                          >
-                            Joker:{" "}
-                            <strong>
-                              {selection.jokerStageNumber
-                                ? `etappe ${selection.jokerStageNumber}`
-                                : "geen joker"}
-                            </strong>
-                          </p>
-
-                          <label>
-                            <span
-                              style={{
-                                display: "block",
-                                marginBottom: "6px",
-                                fontWeight: "600",
-                              }}
-                            >
-                              Nieuwe renner voor deze plek
-                            </span>
-
-                            <select
-                              className="responsive-input"
-                              value={currentAssignmentId}
-                              onChange={(event) =>
-                                handleTransferAssignmentChange(
-                                  selection.selectionId,
-                                  event.target.value
-                                )
-                              }
-                              disabled={
-                                savingId === "transfers"
-                              }
-                            >
-                              <option value="">
-                                Kies een renner
-                              </option>
-
-                              {availableCyclists
-                                .filter(
-                                  (item) =>
-                                    !selectedIds.has(item.id)
-                                )
-                                .map((item) => {
-                                  const selectedElsewhere =
-                                    selectedIncomingIds.includes(
-                                      item.id
-                                    ) &&
-                                    currentAssignmentId !==
-                                      item.id;
-
-                                  const affordable =
-                                    canAffordIncomingCyclist(
-                                      item,
-                                      selection.selectionId
-                                    );
-
-                                  return (
-                                    <option
-                                      key={item.id}
-                                      value={item.id}
-                                      disabled={
-                                        selectedElsewhere ||
-                                        !affordable
-                                      }
-                                    >
-                                      {item.cyclist.name}
-                                      {" · "}
-                                      {item.cyclist.team?.name ??
-                                        "Geen ploeg"}
-                                      {" · €"}
-                                      {item.price}M
-                                      {!affordable
-                                        ? " · te duur"
-                                        : ""}
-                                    </option>
-                                  );
-                                })}
-                            </select>
-                          </label>
-                        </div>
-                      );
-                    }
-                  )}
-
-                  <div
-                    className="responsive-actions"
+                {transferBudgetRemaining <
+                  0 && (
+                  <p
                     style={{
-                      marginTop: "20px",
+                      color: "#b42318",
+                      fontWeight: "700",
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={handleConfirmTransfers}
-                      disabled={
-                        savingId === "transfers" ||
-                        transferBudgetRemaining < 0
-                      }
-                    >
-                      {savingId === "transfers"
-                        ? "Transfers uitvoeren..."
-                        : "Transfers bevestigen"}
-                    </button>
+                    Je zit €
+                    {Math.abs(
+                      transferBudgetRemaining
+                    )}
+                    M boven je budget.
+                  </p>
+                )}
 
-                    <button
-                      type="button"
-                      onClick={handleCancelTransfers}
-                      disabled={
-                        savingId === "transfers"
-                      }
-                    >
-                      Annuleren
-                    </button>
-                  </div>
-                </>
-              )}
-            </section>
-          )}
+                {selectedTransferSelections.length ===
+                  0 && (
+                  <p>
+                    Klik bij één of meer renners
+                    in je ploeg op{" "}
+                    <strong>Transfer</strong>.
+                  </p>
+                )}
 
+                {selectedTransferSelections.length >
+                  0 && (
+                  <>
+                    <h4>
+                      Geselecteerd voor transfer (
+                      {
+                        selectedTransferSelections.length
+                      }
+                      )
+                    </h4>
+
+                    {selectedTransferSelections.map(
+                      (selection) => {
+                        const currentAssignmentId =
+                          transferAssignments[
+                            selection.selectionId
+                          ] ?? "";
+
+                        const selectedIncomingIds =
+                          Object.values(
+                            transferAssignments
+                          );
+
+                        return (
+                          <div
+                            key={
+                              selection.selectionId
+                            }
+                            style={{
+                              padding:
+                                "15px 0",
+                              borderBottom:
+                                "1px solid #ddd",
+                            }}
+                          >
+                            <p
+                              style={{
+                                marginTop: 0,
+                                marginBottom:
+                                  "6px",
+                              }}
+                            >
+                              <strong>
+                                {
+                                  selection.name
+                                }
+                              </strong>{" "}
+                              — €
+                              {
+                                selection.price
+                              }
+                              M
+                            </p>
+
+                            <p
+                              style={{
+                                marginTop: 0,
+                              }}
+                            >
+                              Joker:{" "}
+                              <strong>
+                                {
+                                  selection.jokerStageNumber
+                                    ? `etappe ${selection.jokerStageNumber}`
+                                    : "geen joker"
+                                }
+                              </strong>
+                            </p>
+
+                            <label>
+                              <span
+                                style={{
+                                  display:
+                                    "block",
+                                  marginBottom:
+                                    "6px",
+                                  fontWeight:
+                                    "600",
+                                }}
+                              >
+                                Nieuwe renner
+                                voor deze plek
+                              </span>
+
+                              <select
+                                className="responsive-input"
+                                value={
+                                  currentAssignmentId
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  handleTransferAssignmentChange(
+                                    selection.selectionId,
+                                    event.target
+                                      .value
+                                  )
+                                }
+                                disabled={
+                                  savingId ===
+                                  "transfers"
+                                }
+                              >
+                                <option value="">
+                                  Kies een renner
+                                </option>
+
+                                {availableCyclists
+                                  .filter(
+                                    (item) =>
+                                      !selectedIds.has(
+                                        item.id
+                                      )
+                                  )
+                                  .map(
+                                    (item) => {
+                                      const selectedElsewhere =
+                                        selectedIncomingIds.includes(
+                                          item.id
+                                        ) &&
+                                        currentAssignmentId !==
+                                          item.id;
+
+                                      const affordable =
+                                        canAffordIncomingCyclist(
+                                          item,
+                                          selection.selectionId
+                                        );
+
+                                      return (
+                                        <option
+                                          key={
+                                            item.id
+                                          }
+                                          value={
+                                            item.id
+                                          }
+                                          disabled={
+                                            selectedElsewhere ||
+                                            !affordable
+                                          }
+                                        >
+                                          {
+                                            item
+                                              .cyclist
+                                              .name
+                                          }
+                                          {" · "}
+                                          {item
+                                            .cyclist
+                                            .team
+                                            ?.name ??
+                                            "Geen ploeg"}
+                                          {" · €"}
+                                          {
+                                            item.price
+                                          }
+                                          M
+                                          {!affordable
+                                            ? " · te duur"
+                                            : ""}
+                                        </option>
+                                      );
+                                    }
+                                  )}
+                              </select>
+                            </label>
+                          </div>
+                        );
+                      }
+                    )}
+
+                    <div
+                      className="responsive-actions"
+                      style={{
+                        marginTop: "20px",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={
+                          handleConfirmTransfers
+                        }
+                        disabled={
+                          savingId ===
+                            "transfers" ||
+                          transferBudgetRemaining <
+                            0
+                        }
+                      >
+                        {savingId ===
+                        "transfers"
+                          ? "Transfers uitvoeren..."
+                          : "Transfers bevestigen"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={
+                          handleCancelTransfers
+                        }
+                        disabled={
+                          savingId ===
+                          "transfers"
+                        }
+                      >
+                        Annuleren
+                      </button>
+                    </div>
+                  </>
+                )}
+              </section>
+            )}
         </>
       )}
     </main>

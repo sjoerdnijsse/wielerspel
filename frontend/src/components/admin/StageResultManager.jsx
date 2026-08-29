@@ -138,7 +138,22 @@ export default function StageResultManager({ competition }) {
       setCyclists(sortedCyclists);
 
       if (sortedStages.length > 0) {
-        setSelectedStageId(sortedStages[0].id);
+        /*
+         * Selecteer automatisch de eerste etappe
+         * die nog niet gepubliceerd is.
+         *
+         * Als alle etappes al gepubliceerd zijn,
+         * gebruiken we etappe 1 als fallback.
+         */
+        const firstUnpublishedStage =
+          sortedStages.find(
+            (stage) => !stage.resultsPublished
+          );
+
+        setSelectedStageId(
+          firstUnpublishedStage?.id ??
+            sortedStages[0].id
+        );
       } else {
         setSelectedStageId("");
         resetResultForm();
@@ -202,7 +217,6 @@ export default function StageResultManager({ competition }) {
       );
 
       setNoResult(stageData.noResult ?? false);
-
     } catch (err) {
       setError(
         err.message ||
@@ -308,39 +322,39 @@ export default function StageResultManager({ competition }) {
   }
 
   function getCyclistsByTeam(cyclists) {
-  const groups = {};
+    const groups = {};
 
-  cyclists.forEach((competitionCyclist) => {
-    const teamName =
-      getCyclistTeamName(competitionCyclist) ||
-      "Geen ploeg";
+    cyclists.forEach((competitionCyclist) => {
+      const teamName =
+        getCyclistTeamName(competitionCyclist) ||
+        "Geen ploeg";
 
-    if (!groups[teamName]) {
-      groups[teamName] = [];
-    }
+      if (!groups[teamName]) {
+        groups[teamName] = [];
+      }
 
-    groups[teamName].push(competitionCyclist);
-  });
+      groups[teamName].push(competitionCyclist);
+    });
 
-  return Object.entries(groups)
-    .sort(([teamA], [teamB]) =>
-      teamA.localeCompare(teamB, "nl", {
-        sensitivity: "base",
-      })
-    )
-    .map(([teamName, teamCyclists]) => ({
-      teamName,
-      cyclists: teamCyclists.sort((a, b) =>
-        getCyclistName(a).localeCompare(
-          getCyclistName(b),
-          "nl",
-          {
-            sensitivity: "base",
-          }
-        )
-      ),
-    }));
-}
+    return Object.entries(groups)
+      .sort(([teamA], [teamB]) =>
+        teamA.localeCompare(teamB, "nl", {
+          sensitivity: "base",
+        })
+      )
+      .map(([teamName, teamCyclists]) => ({
+        teamName,
+        cyclists: teamCyclists.sort((a, b) =>
+          getCyclistName(a).localeCompare(
+            getCyclistName(b),
+            "nl",
+            {
+              sensitivity: "base",
+            }
+          )
+        ),
+      }));
+  }
 
   function validateResults() {
     if (noResult) {
@@ -751,79 +765,79 @@ export default function StageResultManager({ competition }) {
       </section>
 
       {selectedStage && (
-      <section
-        className="responsive-card"
-        style={{
-          marginBottom: "24px",
-        }}
-      >
-        <label
+        <section
+          className="responsive-card"
           style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "10px",
-            cursor: "pointer",
+            marginBottom: "24px",
           }}
         >
-          <input
-            type="checkbox"
-            checked={noResult}
-            onChange={(event) => {
-              const checked =
-                event.target.checked;
-
-              setNoResult(checked);
-              setError("");
-              setMessage("");
-
-              if (checked) {
-                setSelections(
-                  createEmptySelections()
-                );
-
-                setYellowJerseyCompetitionCyclistId(
-                  ""
-                );
-                setGreenJerseyCompetitionCyclistId(
-                  ""
-                );
-                setPolkaDotJerseyCompetitionCyclistId(
-                  ""
-                );
-                setWhiteJerseyCompetitionCyclistId(
-                  ""
-                );
-              }
-            }}
-            disabled={
-              saving || loadingResults
-            }
+          <label
             style={{
-              marginTop: "4px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              cursor: "pointer",
             }}
-          />
+          >
+            <input
+              type="checkbox"
+              checked={noResult}
+              onChange={(event) => {
+                const checked =
+                  event.target.checked;
 
-          <span>
-            <strong>
-              Deze etappe heeft geen uitslag
-            </strong>
+                setNoResult(checked);
+                setError("");
+                setMessage("");
 
-            <span
-              style={{
-                display: "block",
-                marginTop: "4px",
-                color: "#666",
+                if (checked) {
+                  setSelections(
+                    createEmptySelections()
+                  );
+
+                  setYellowJerseyCompetitionCyclistId(
+                    ""
+                  );
+                  setGreenJerseyCompetitionCyclistId(
+                    ""
+                  );
+                  setPolkaDotJerseyCompetitionCyclistId(
+                    ""
+                  );
+                  setWhiteJerseyCompetitionCyclistId(
+                    ""
+                  );
+                }
               }}
-            >
-              Er worden geen etappepunten,
-              jokerpunten of truipunten toegekend.
-              Alle spelers krijgen voor deze
-              etappe 0 punten.
+              disabled={
+                saving || loadingResults
+              }
+              style={{
+                marginTop: "4px",
+              }}
+            />
+
+            <span>
+              <strong>
+                Deze etappe heeft geen uitslag
+              </strong>
+
+              <span
+                style={{
+                  display: "block",
+                  marginTop: "4px",
+                  color: "#666",
+                }}
+              >
+                Er worden geen etappepunten,
+                jokerpunten of truipunten toegekend.
+                Alle spelers krijgen voor deze
+                etappe 0 punten.
+              </span>
             </span>
-          </span>
-        </label>
-      </section>
-    )}
+          </label>
+        </section>
+      )}
 
       {loadingResults ? (
         <p>Uitslag laden...</p>
@@ -898,53 +912,33 @@ export default function StageResultManager({ competition }) {
                             </td>
 
                             <td className="stage-results-td">
-                              <select
+                              <SearchableCyclistSelect
+                                cyclists={cyclists}
+                                cyclistGroups={cyclistGroups}
                                 value={
                                   selectedCyclistId
                                 }
-                                onChange={(event) =>
+                                selectedCyclistIds={
+                                  selectedCyclistIds
+                                }
+                                onChange={(value) =>
                                   handleCyclistChange(
                                     positionIndex,
-                                    event.target.value
+                                    value
                                   )
                                 }
+                                getCyclistName={
+                                  getCyclistName
+                                }
+                                getCyclistTeamName={
+                                  getCyclistTeamName
+                                }
+                                getCyclistNumber={
+                                  getCyclistNumber
+                                }
                                 disabled={saving}
-                                className="responsive-input"
-                              >
-                                <option value="">
-                                  Kies een renner
-                                </option>
-
-                                {cyclistGroups.map((group) => (
-                                  <optgroup
-                                    key={group.teamName}
-                                    label={group.teamName}
-                                  >
-                                    {group.cyclists.map(
-                                      (competitionCyclist) => {
-                                        const isSelectedElsewhere =
-                                          selectedCyclistIds.includes(
-                                            competitionCyclist.id
-                                          ) &&
-                                          selectedCyclistId !==
-                                            competitionCyclist.id;
-
-                                        return (
-                                          <option
-                                            key={competitionCyclist.id}
-                                            value={competitionCyclist.id}
-                                            disabled={isSelectedElsewhere}
-                                          >
-                                            {getCyclistName(
-                                              competitionCyclist
-                                            )}
-                                          </option>
-                                        );
-                                      }
-                                    )}
-                                  </optgroup>
-                                ))}
-                              </select>
+                                placeholder="Zoek een renner..."
+                              />
                             </td>
 
                             <td className="stage-results-td stage-results-td--right">
@@ -975,55 +969,31 @@ export default function StageResultManager({ competition }) {
                       </div>
 
                       <div className="stage-result-mobile-select">
-                        <select
-                          id={`position-${positionIndex + 1}`}
-                          aria-label={`Renner op positie ${
-                            positionIndex + 1
-                          }`}
+                        <SearchableCyclistSelect
+                          cyclists={cyclists}
+                          cyclistGroups={cyclistGroups}
                           value={selectedCyclistId}
-                          onChange={(event) =>
+                          selectedCyclistIds={
+                            selectedCyclistIds
+                          }
+                          onChange={(value) =>
                             handleCyclistChange(
                               positionIndex,
-                              event.target.value
+                              value
                             )
                           }
+                          getCyclistName={
+                            getCyclistName
+                          }
+                          getCyclistTeamName={
+                            getCyclistTeamName
+                          }
+                          getCyclistNumber={
+                            getCyclistNumber
+                          }
                           disabled={saving}
-                          className="responsive-input"
-                        >
-                          <option value="">
-                            Kies een renner
-                          </option>
-
-                          {cyclistGroups.map((group) => (
-                            <optgroup
-                              key={group.teamName}
-                              label={group.teamName}
-                            >
-                              {group.cyclists.map(
-                                (competitionCyclist) => {
-                                  const isSelectedElsewhere =
-                                    selectedCyclistIds.includes(
-                                      competitionCyclist.id
-                                    ) &&
-                                    selectedCyclistId !==
-                                      competitionCyclist.id;
-
-                                  return (
-                                    <option
-                                      key={competitionCyclist.id}
-                                      value={competitionCyclist.id}
-                                      disabled={isSelectedElsewhere}
-                                    >
-                                      {getCyclistName(
-                                        competitionCyclist
-                                      )}
-                                    </option>
-                                  );
-                                }
-                              )}
-                            </optgroup>
-                          ))}
-                        </select>
+                          placeholder="Zoek een renner..."
+                        />
                       </div>
 
                       <div className="stage-result-mobile-points">
@@ -1067,8 +1037,15 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
+                cyclists={cyclists}
                 cyclistGroups={cyclistGroups}
                 getCyclistName={getCyclistName}
+                getCyclistTeamName={
+                  getCyclistTeamName
+                }
+                getCyclistNumber={
+                  getCyclistNumber
+                }
                 disabled={saving}
               />
 
@@ -1085,8 +1062,15 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
+                cyclists={cyclists}
                 cyclistGroups={cyclistGroups}
                 getCyclistName={getCyclistName}
+                getCyclistTeamName={
+                  getCyclistTeamName
+                }
+                getCyclistNumber={
+                  getCyclistNumber
+                }
                 disabled={saving}
               />
 
@@ -1103,8 +1087,15 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
+                cyclists={cyclists}
                 cyclistGroups={cyclistGroups}
                 getCyclistName={getCyclistName}
+                getCyclistTeamName={
+                  getCyclistTeamName
+                }
+                getCyclistNumber={
+                  getCyclistNumber
+                }
                 disabled={saving}
               />
 
@@ -1121,8 +1112,15 @@ export default function StageResultManager({ competition }) {
                     value
                   )
                 }
+                cyclists={cyclists}
                 cyclistGroups={cyclistGroups}
                 getCyclistName={getCyclistName}
+                getCyclistTeamName={
+                  getCyclistTeamName
+                }
+                getCyclistNumber={
+                  getCyclistNumber
+                }
                 disabled={saving}
               />
             </div>
@@ -1170,8 +1168,8 @@ export default function StageResultManager({ competition }) {
             }
           >
             {noResult
-            ? "Etappe publiceren"
-            : "Uitslag publiceren"}
+              ? "Etappe publiceren"
+              : "Uitslag publiceren"}
           </button>
         )}
 
@@ -1191,14 +1189,347 @@ export default function StageResultManager({ competition }) {
   );
 }
 
+function SearchableCyclistSelect({
+  cyclists,
+  cyclistGroups,
+  value,
+  selectedCyclistIds,
+  onChange,
+  getCyclistName,
+  getCyclistTeamName,
+  getCyclistNumber,
+  disabled,
+  placeholder = "Zoek een renner...",
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const selectedCyclist = cyclists.find(
+    (cyclist) => cyclist.id === value
+  );
+
+  const normalizedSearchTerm =
+    searchTerm.trim().toLowerCase();
+
+  const filteredGroups = useMemo(() => {
+    if (!normalizedSearchTerm) {
+      return cyclistGroups;
+    }
+
+    return cyclistGroups
+      .map((group) => {
+        const filteredCyclists =
+          group.cyclists.filter(
+            (cyclist) => {
+              const name = getCyclistName(
+                cyclist
+              ).toLowerCase();
+
+              const team =
+                getCyclistTeamName(
+                  cyclist
+                ).toLowerCase();
+
+              const number = String(
+                getCyclistNumber(cyclist)
+              ).toLowerCase();
+
+              return (
+                name.includes(
+                  normalizedSearchTerm
+                ) ||
+                team.includes(
+                  normalizedSearchTerm
+                ) ||
+                number.includes(
+                  normalizedSearchTerm
+                )
+              );
+            }
+          );
+
+        return {
+          ...group,
+          cyclists: filteredCyclists,
+        };
+      })
+      .filter(
+        (group) => group.cyclists.length > 0
+      );
+  }, [
+    cyclistGroups,
+    normalizedSearchTerm,
+    getCyclistName,
+    getCyclistTeamName,
+    getCyclistNumber,
+  ]);
+
+  function handleOpen() {
+    if (disabled) {
+      return;
+    }
+
+    setSearchTerm("");
+    setIsOpen(true);
+  }
+
+  function handleSelect(cyclistId) {
+    onChange(cyclistId);
+    setSearchTerm("");
+    setIsOpen(false);
+  }
+
+  function handleClear() {
+    onChange("");
+    setSearchTerm("");
+    setIsOpen(false);
+  }
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+      }}
+    >
+      <button
+        type="button"
+        onClick={handleOpen}
+        disabled={disabled}
+        style={{
+          width: "100%",
+          minHeight: "42px",
+          padding: "9px 12px",
+          textAlign: "left",
+          background: "white",
+          border: "1px solid #ccc",
+          borderRadius: "6px",
+          cursor: disabled
+            ? "default"
+            : "pointer",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {selectedCyclist ? (
+          <span>
+            {getCyclistName(selectedCyclist)}
+
+            {getCyclistTeamName(
+              selectedCyclist
+            ) && (
+              <span
+                style={{
+                  color: "#666",
+                  marginLeft: "6px",
+                }}
+              >
+                (
+                {getCyclistTeamName(
+                  selectedCyclist
+                )}
+                )
+              </span>
+            )}
+          </span>
+        ) : (
+          <span style={{ color: "#666" }}>
+            {placeholder}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <>
+          <div
+            onClick={() => setIsOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 99,
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              top: "calc(100% + 4px)",
+              left: 0,
+              right: 0,
+              zIndex: 100,
+              background: "white",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              boxShadow:
+                "0 4px 12px rgba(0, 0, 0, 0.15)",
+              padding: "10px",
+            }}
+          >
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) =>
+                setSearchTerm(
+                  event.target.value
+                )
+              }
+              autoFocus
+              placeholder="Zoek op naam, ploeg of nummer..."
+              aria-label="Zoek renner"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "9px 10px",
+                border: "1px solid #bbb",
+                borderRadius: "6px",
+                marginBottom: "8px",
+              }}
+            />
+
+            {value && (
+              <button
+                type="button"
+                onClick={handleClear}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginBottom: "8px",
+                  textAlign: "left",
+                  border: "none",
+                  background: "#f5f5f5",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Selectie wissen
+              </button>
+            )}
+
+            <div
+              style={{
+                maxHeight: "300px",
+                overflowY: "auto",
+              }}
+            >
+              {filteredGroups.length === 0 ? (
+                <p
+                  style={{
+                    margin: "10px 4px",
+                    color: "#666",
+                  }}
+                >
+                  Geen renners gevonden.
+                </p>
+              ) : (
+                filteredGroups.map((group) => (
+                  <div key={group.teamName}>
+                    <div
+                      style={{
+                        padding:
+                          "7px 6px 4px",
+                        fontSize: "0.85em",
+                        fontWeight: "bold",
+                        color: "#666",
+                      }}
+                    >
+                      {group.teamName}
+                    </div>
+
+                    {group.cyclists.map(
+                      (cyclist) => {
+                        const isSelectedElsewhere =
+                          selectedCyclistIds.includes(
+                            cyclist.id
+                          ) &&
+                          value !== cyclist.id;
+
+                        return (
+                          <button
+                            key={cyclist.id}
+                            type="button"
+                            disabled={
+                              isSelectedElsewhere
+                            }
+                            onClick={() =>
+                              handleSelect(
+                                cyclist.id
+                              )
+                            }
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              padding:
+                                "8px 6px",
+                              textAlign: "left",
+                              border: "none",
+                              background:
+                                value ===
+                                cyclist.id
+                                  ? "#f0f0f0"
+                                  : "transparent",
+                              borderRadius:
+                                "5px",
+                              cursor:
+                                isSelectedElsewhere
+                                  ? "default"
+                                  : "pointer",
+                              opacity:
+                                isSelectedElsewhere
+                                  ? 0.4
+                                  : 1,
+                            }}
+                          >
+                            <strong>
+                              {getCyclistName(
+                                cyclist
+                              )}
+                            </strong>
+
+                            {getCyclistNumber(
+                              cyclist
+                            ) && (
+                              <span
+                                style={{
+                                  marginLeft:
+                                    "6px",
+                                  color: "#666",
+                                  fontSize:
+                                    "0.9em",
+                                }}
+                              >
+                                #
+                                {getCyclistNumber(
+                                  cyclist
+                                )}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function JerseyField({
   id,
   label,
   points,
   value,
   onChange,
+  cyclists,
   cyclistGroups,
   getCyclistName,
+  getCyclistTeamName,
+  getCyclistNumber,
   disabled,
 }) {
   return (
@@ -1211,56 +1542,24 @@ function JerseyField({
         +{points} punten
       </div>
 
-      <select
-        id={id}
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        disabled={disabled}
-        className="responsive-input"
-        style={{ marginTop: "10px" }}
-      >
-        <option value="">
-          Kies een renner
-        </option>
-
-        {cyclistGroups.map((group) => (
-          <optgroup
-            key={group.teamName}
-            label={group.teamName}
-          >
-            {group.cyclists.map(
-              (competitionCyclist) => (
-                <option
-                  key={competitionCyclist.id}
-                  value={competitionCyclist.id}
-                >
-                  {getCyclistName(
-                    competitionCyclist
-                  )}
-                </option>
-              )
-            )}
-          </optgroup>
-        ))}
-      </select>
+      <div style={{ marginTop: "10px" }}>
+        <SearchableCyclistSelect
+          cyclists={cyclists}
+          cyclistGroups={cyclistGroups}
+          value={value}
+          selectedCyclistIds={[]}
+          onChange={onChange}
+          getCyclistName={getCyclistName}
+          getCyclistTeamName={
+            getCyclistTeamName
+          }
+          getCyclistNumber={
+            getCyclistNumber
+          }
+          disabled={disabled}
+          placeholder="Zoek een renner..."
+        />
+      </div>
     </div>
   );
-}
-
-function getPositionIcon(position) {
-  switch (position) {
-    case 1:
-      return "🥇";
-
-    case 2:
-      return "🥈";
-
-    case 3:
-      return "🥉";
-
-    default:
-      return position;
-  }
 }

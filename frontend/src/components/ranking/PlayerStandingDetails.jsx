@@ -16,6 +16,7 @@ function PlayerStandingDetails({
         : stageId
     );
   }
+
   if (loading) {
     return (
       <section
@@ -147,7 +148,7 @@ function PlayerStandingDetails({
                 <tr>
                   <th
                     style={{
-                      padding: "10px",
+                      padding: "10px 4px",
                       textAlign: "left",
                       borderBottom: "2px solid #ccc",
                     }}
@@ -157,7 +158,7 @@ function PlayerStandingDetails({
 
                   <th
                     style={{
-                      padding: "10px",
+                      padding: "10px 4px",
                       textAlign: "right",
                       borderBottom: "2px solid #ccc",
                     }}
@@ -183,7 +184,7 @@ function PlayerStandingDetails({
                         <tr>
                           <td
                             style={{
-                              padding: "10px",
+                              padding: "10px 4px",
                               borderBottom:
                                 isExpanded
                                   ? "none"
@@ -210,7 +211,6 @@ function PlayerStandingDetails({
                                   cursor: "pointer",
                                 }}
                               >
-                                {isExpanded ? "▾" : "▸"}{" "}
                                 Etappe{" "}
                                 {stagePoint.stageNumber}
                               </button>
@@ -224,7 +224,7 @@ function PlayerStandingDetails({
 
                           <td
                             style={{
-                              padding: "10px",
+                              padding: "10px 4px",
                               textAlign: "right",
                               borderBottom:
                                 isExpanded
@@ -263,19 +263,23 @@ function PlayerStandingDetails({
                                     textAlign: "left",
                                   }}
                                 >
-                                  Team in etappe {stagePoint.stageNumber}
+                                  Team in etappe{" "}
+                                  {stagePoint.stageNumber}
                                 </div>
 
                                 {stagePoint.cyclists.map(
                                   (cyclist) => (
                                     <div
-                                      key={cyclist.competitionCyclistId}
+                                      key={
+                                        cyclist.competitionCyclistId
+                                      }
                                       style={{
                                         display: "flex",
                                         alignItems: "center",
                                         gap: "10px",
                                         padding: "7px 0",
-                                        borderBottom: "1px solid #eee",
+                                        borderBottom:
+                                          "1px solid #eee",
                                         width: "100%",
                                       }}
                                     >
@@ -329,7 +333,8 @@ function PlayerStandingDetails({
 
                                       <strong
                                         style={{
-                                          whiteSpace: "nowrap",
+                                          whiteSpace:
+                                            "nowrap",
                                           marginLeft: "auto",
                                           textAlign: "right",
                                           minWidth: "70px",
@@ -436,7 +441,8 @@ function PlayerStandingDetails({
                         <td
                           style={{
                             padding: "10px",
-                            borderBottom: "1px solid #eee",
+                            borderBottom:
+                              "1px solid #eee",
                           }}
                         >
                           <div
@@ -448,7 +454,9 @@ function PlayerStandingDetails({
                           >
                             {cyclist.jerseyImageUrl && (
                               <img
-                                src={cyclist.jerseyImageUrl}
+                                src={
+                                  cyclist.jerseyImageUrl
+                                }
                                 alt=""
                                 style={{
                                   width: "32px",
