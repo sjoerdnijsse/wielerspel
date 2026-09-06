@@ -1001,104 +1001,51 @@ function Team() {
                               </strong>
                             </p>
 
-                            <label>
-                              <span
-                                style={{
-                                  display:
-                                    "block",
-                                  marginBottom:
-                                    "6px",
-                                  fontWeight:
-                                    "600",
-                                }}
-                              >
-                                Nieuwe renner
-                                voor deze plek
-                              </span>
-
-                              <select
-                                className="responsive-input"
-                                value={
-                                  currentAssignmentId
-                                }
-                                onChange={(
-                                  event
-                                ) =>
-                                  handleTransferAssignmentChange(
-                                    selection.selectionId,
-                                    event.target
-                                      .value
-                                  )
-                                }
-                                disabled={
-                                  savingId ===
-                                  "transfers"
-                                }
-                              >
-                                <option value="">
-                                  Kies een renner
-                                </option>
-
-                                {availableCyclists
-                                  .filter(
-                                    (item) =>
-                                      !selectedIds.has(
-                                        item.id
-                                      )
-                                  )
-                                  .map(
-                                    (item) => {
-                                      const selectedElsewhere =
-                                        selectedIncomingIds.includes(
-                                          item.id
-                                        ) &&
-                                        currentAssignmentId !==
-                                          item.id;
-
-                                      const affordable =
-                                        canAffordIncomingCyclist(
-                                          item,
-                                          selection.selectionId
-                                        );
-
-                                      return (
-                                        <option
-                                          key={
-                                            item.id
-                                          }
-                                          value={
-                                            item.id
-                                          }
-                                          disabled={
-                                            selectedElsewhere ||
-                                            !affordable
-                                          }
-                                        >
-                                          {
-                                            item
-                                              .cyclist
-                                              .name
-                                          }
-                                          {" · "}
-                                          {item
-                                            .cyclist
-                                            .team
-                                            ?.name ??
-                                            "Geen ploeg"}
-                                          {" · €"}
-                                          {
-                                            item.price
-                                          }
-                                          M
-                                          {!affordable
-                                            ? " · te duur"
-                                            : ""}
-                                        </option>
-                                      );
-                                    }
-                                  )}
-                              </select>
-                            </label>
+                            <SearchableTransferCyclistSelect
+                              cyclists={
+                                availableCyclists
+                              }
+                              value={
+                                currentAssignmentId
+                              }
+                              selectedCyclistIds={
+                                selectedIncomingIds
+                              }
+                              onChange={(
+                                cyclistId
+                              ) =>
+                                handleTransferAssignmentChange(
+                                  selection.selectionId,
+                                  cyclistId
+                                )
+                              }
+                              canAfford={(
+                                cyclist
+                              ) =>
+                                canAffordIncomingCyclist(
+                                  cyclist,
+                                  selection.selectionId
+                                )
+                              }
+                              getCyclistName={(
+                                cyclist
+                              ) =>
+                                cyclist.cyclist
+                                  .name
+                              }
+                              getCyclistTeamName={(
+                                cyclist
+                              ) =>
+                                cyclist.cyclist
+                                  .team
+                                  ?.name ??
+                                "Geen ploeg"
+                              }
+                              disabled={
+                                savingId ===
+                                "transfers"
+                              }
+                            />
                           </div>
                         );
                       }
@@ -1148,6 +1095,303 @@ function Team() {
         </>
       )}
     </main>
+  );
+}
+
+function SearchableTransferCyclistSelect({
+  cyclists,
+  value,
+  selectedCyclistIds,
+  onChange,
+  canAfford,
+  getCyclistName,
+  getCyclistTeamName,
+  disabled,
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const selectedCyclist =
+    cyclists.find(
+      (cyclist) => cyclist.id === value
+    ) ?? null;
+
+  const filteredCyclists = useMemo(() => {
+    const normalizedSearch =
+      search.trim().toLowerCase();
+
+    return cyclists
+      .filter(
+        (cyclist) =>
+          !selectedCyclistIds.includes(
+            cyclist.id
+          ) ||
+          cyclist.id === value
+      )
+      .filter((cyclist) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        const name =
+          getCyclistName(cyclist).toLowerCase();
+
+        const team =
+          getCyclistTeamName(cyclist).toLowerCase();
+
+        return (
+          name.includes(normalizedSearch) ||
+          team.includes(normalizedSearch)
+        );
+      });
+  }, [
+    cyclists,
+    selectedCyclistIds,
+    value,
+    search,
+    getCyclistName,
+    getCyclistTeamName,
+  ]);
+
+  function handleSelect(cyclist) {
+    onChange(cyclist.id);
+    setSearch("");
+    setOpen(false);
+  }
+
+  function handleClear() {
+    onChange("");
+    setSearch("");
+    setOpen(false);
+  }
+
+  return (
+    <div
+      style={{
+        position: "relative",
+      }}
+    >
+      <label
+        style={{
+          display: "block",
+          marginBottom: "6px",
+          fontWeight: "600",
+        }}
+      >
+        Nieuwe renner voor deze plek
+      </label>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          flexWrap: "wrap",
+        }}
+      >
+        {selectedCyclist && (
+          <div
+            style={{
+              flex: "1 1 240px",
+              minWidth: 0,
+              padding: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              background: "#f8f8f8",
+            }}
+          >
+            <strong>
+              {getCyclistName(
+                selectedCyclist
+              )}
+            </strong>
+
+            <div
+              style={{
+                marginTop: "3px",
+                fontSize: "0.9rem",
+              }}
+            >
+              {getCyclistTeamName(
+                selectedCyclist
+              )}
+              {" · €"}
+              {selectedCyclist.price}M
+            </div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            if (disabled) {
+              return;
+            }
+
+            setOpen(
+              (current) => !current
+            );
+          }}
+          disabled={disabled}
+          style={{
+            flex:
+              selectedCyclist
+                ? "0 0 auto"
+                : "1 1 100%",
+          }}
+        >
+          {selectedCyclist
+            ? "Andere renner kiezen"
+            : "Kies een renner"}
+        </button>
+
+        {selectedCyclist && (
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={disabled}
+          >
+            Wissen
+          </button>
+        )}
+      </div>
+
+      {open && !disabled && (
+        <div
+          style={{
+            marginTop: "8px",
+            padding: "12px",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            background: "#fff",
+          }}
+        >
+          <input
+            type="text"
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Zoek op naam of ploeg..."
+            autoFocus
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "10px",
+              marginBottom: "10px",
+            }}
+          />
+
+          <div
+            style={{
+              maxHeight: "300px",
+              overflowY: "auto",
+            }}
+          >
+            {filteredCyclists.length ===
+            0 ? (
+              <p
+                style={{
+                  margin: 0,
+                }}
+              >
+                Geen renners gevonden.
+              </p>
+            ) : (
+              filteredCyclists.map(
+                (cyclist) => {
+                  const selectedElsewhere =
+                    selectedCyclistIds.includes(
+                      cyclist.id
+                    ) &&
+                    cyclist.id !== value;
+
+                  const affordable =
+                    canAfford(cyclist);
+
+                  const unavailable =
+                    selectedElsewhere ||
+                    !affordable;
+
+                  return (
+                    <button
+                      key={cyclist.id}
+                      type="button"
+                      onClick={() =>
+                        handleSelect(
+                          cyclist
+                        )
+                      }
+                      disabled={
+                        unavailable
+                      }
+                      style={{
+                        display:
+                          "block",
+                        width: "100%",
+                        textAlign:
+                          "left",
+                        padding:
+                          "10px",
+                        marginBottom:
+                          "6px",
+                        border:
+                          "1px solid #ddd",
+                        borderRadius:
+                          "6px",
+                        background:
+                          unavailable
+                            ? "#f5f5f5"
+                            : "#fff",
+                        cursor:
+                          unavailable
+                            ? "not-allowed"
+                            : "pointer",
+                        opacity:
+                          unavailable
+                            ? 0.6
+                            : 1,
+                      }}
+                    >
+                      <strong>
+                        {getCyclistName(
+                          cyclist
+                        )}
+                      </strong>
+
+                      <span>
+                        {" · "}
+                        {getCyclistTeamName(
+                          cyclist
+                        )}
+                      </span>
+
+                      <span>
+                        {" · €"}
+                        {cyclist.price}M
+                      </span>
+
+                      {!affordable && (
+                        <span>
+                          {" · te duur"}
+                        </span>
+                      )}
+
+                      {selectedElsewhere && (
+                        <span>
+                          {" · al gekozen"}
+                        </span>
+                      )}
+                    </button>
+                  );
+                }
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
