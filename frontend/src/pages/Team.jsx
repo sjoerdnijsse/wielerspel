@@ -17,6 +17,8 @@ import Countdown from "../components/Countdown";
 
 function Team() {
   const [competitionId, setCompetitionId] = useState("");
+  const [finishedCompetition, setFinishedCompetition] =
+    useState(null);
 
   const [availableCyclists, setAvailableCyclists] = useState([]);
   const [stages, setStages] = useState([]);
@@ -63,15 +65,27 @@ function Team() {
       const data = await getCompetitions();
 
       const activeCompetition = data.find(
-        (competition) => competition.isActive
+        (competition) =>
+          competition.isActive &&
+          !competition.isFinished
       );
 
       if (activeCompetition) {
+        setFinishedCompetition(null);
         setCompetitionId(activeCompetition.id);
-      } else {
-        setCompetitionId("");
-        setLoading(false);
+        return;
       }
+
+      const latestFinishedCompetition = data.find(
+        (competition) => competition.isFinished
+      );
+
+      setCompetitionId("");
+      setFinishedCompetition(
+        latestFinishedCompetition ?? null
+      );
+      setTeamData(null);
+      setLoading(false);
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -653,6 +667,32 @@ function Team() {
   return (
     <main className="page-container">
       <h2>Mijn ploeg</h2>
+
+      {!loading && finishedCompetition && (
+        <section
+          className="responsive-card"
+          style={{
+            marginBottom: "25px",
+            textAlign: "center",
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>
+            Het spel is momenteel niet actief
+          </h3>
+
+          <p>
+            {finishedCompetition.name}{" "}
+            {finishedCompetition.year} is afgelopen. Je
+            ploeg kan niet meer worden aangepast.
+          </p>
+
+          <p style={{ marginBottom: 0 }}>
+            Het eindklassement en de uitslagen blijven
+            beschikbaar. We zien je graag terug bij de
+            volgende grote ronde!
+          </p>
+        </section>
+      )}
 
       {!teamData?.teamLocked &&
         firstStageStartTime && (

@@ -24,11 +24,14 @@ public class CompetitionsController : ControllerBase
         _context = context;
     }
 
-    // Iedere ingelogde gebruiker mag actieve competities bekijken.
+    // Iedere ingelogde gebruiker krijgt de actieve competitie(s).
+    // Als er geen actieve competitie is, geven we de meest recent
+    // afgeronde competitie terug. Daardoor blijft onder andere het
+    // eindklassement beschikbaar tussen twee grote rondes in.
     [HttpGet]
     public async Task<IActionResult> GetCompetitions()
     {
-        var competitions = await _context.Competitions
+        var activeCompetitions = await _context.Competitions
             .AsNoTracking()
             .Where(competition =>
                 competition.IsActive &&
@@ -42,7 +45,37 @@ public class CompetitionsController : ControllerBase
             )
             .ToListAsync();
 
-        return Ok(competitions);
+        if (activeCompetitions.Count > 0)
+        {
+            return Ok(activeCompetitions);
+        }
+
+        var latestFinishedCompetition =
+            await _context.Competitions
+                .AsNoTracking()
+                .Where(competition =>
+                    competition.IsFinished
+                )
+                .OrderByDescending(competition =>
+                    competition.FinishedAt
+                )
+                .ThenByDescending(competition =>
+                    competition.Year
+                )
+                .ThenBy(competition =>
+                    competition.Name
+                )
+                .FirstOrDefaultAsync();
+
+        if (latestFinishedCompetition == null)
+        {
+            return Ok(Array.Empty<Competition>());
+        }
+
+        return Ok(new[]
+        {
+            latestFinishedCompetition
+        });
     }
 
     // Alleen moderators mogen alle competities bekijken,

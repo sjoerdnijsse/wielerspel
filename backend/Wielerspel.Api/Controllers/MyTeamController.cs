@@ -185,6 +185,13 @@ public class MyTeamController : ControllerBase
             return NotFound("Wedstrijd niet gevonden.");
         }
 
+
+        if (competition.IsFinished)
+        {
+            return BadRequest(
+                "Deze wedstrijd is afgelopen. Je ploeg kan niet meer worden aangepast."
+            );
+        }
         var existingCompetitionUser = await _context.CompetitionUsers
             .FirstOrDefaultAsync(x =>
                 x.CompetitionId == competitionId &&
@@ -430,6 +437,13 @@ public class MyTeamController : ControllerBase
             return NotFound("Wedstrijd niet gevonden.");
         }
 
+
+        if (competition.IsFinished)
+        {
+            return BadRequest(
+                "Deze wedstrijd is afgelopen. Je ploeg kan niet meer worden aangepast."
+            );
+        }
         var competitionUser = await _context.CompetitionUsers
             .FirstOrDefaultAsync(x =>
                 x.CompetitionId == competitionId &&
@@ -500,6 +514,13 @@ public class MyTeamController : ControllerBase
             return NotFound("Wedstrijd niet gevonden.");
         }
 
+
+        if (competition.IsFinished)
+        {
+            return BadRequest(
+                "Deze wedstrijd is afgelopen. Je ploeg kan niet meer worden aangepast."
+            );
+        }
         var competitionUser = await _context.CompetitionUsers
             .FirstOrDefaultAsync(x =>
                 x.CompetitionId == competitionId &&
@@ -740,6 +761,13 @@ public class MyTeamController : ControllerBase
             );
         }
 
+
+        if (competition.IsFinished)
+        {
+            return BadRequest(
+                "Deze wedstrijd is afgelopen. Je ploeg kan niet meer worden aangepast."
+            );
+        }
         if (!IsTransferPeriodOpen(competition))
         {
             return BadRequest(
@@ -1169,6 +1197,11 @@ public class MyTeamController : ControllerBase
         Competition competition
     )
     {
+        if (competition.IsFinished || !competition.IsActive)
+        {
+            return false;
+        }
+
         return DateTime.UtcNow >= GetTeamLockDateUtc(competition);
     }
 
