@@ -14,6 +14,7 @@ public class CompetitionsController : ControllerBase
     private const int YellowJerseyPoints = 10;
     private const int GreenJerseyPoints = 5;
     private const int PolkaDotJerseyPoints = 5;
+    private const int WhiteJerseyPoints = 5;
 
     private readonly WielerspelDbContext _context;
 
@@ -299,13 +300,6 @@ public class CompetitionsController : ControllerBase
             );
         }
 
-        if (competition.IsFinished)
-        {
-            return BadRequest(
-                "Deze wedstrijd is al afgerond."
-            );
-        }
-
         var competitionUsers =
             await _context.CompetitionUsers
                 .AsNoTracking()
@@ -350,7 +344,10 @@ public class CompetitionsController : ControllerBase
                     .GreenJerseyCompetitionCyclistId,
 
                 stage
-                    .PolkaDotJerseyCompetitionCyclistId
+                    .PolkaDotJerseyCompetitionCyclistId,
+
+                stage
+                    .WhiteJerseyCompetitionCyclistId
             })
             .ToListAsync();
 
@@ -432,9 +429,31 @@ public class CompetitionsController : ControllerBase
                 )
                 .Select(selection => new
                 {
+                    SelectionId = selection.Id,
                     selection.CompetitionUserId,
                     selection.CompetitionCyclistId,
                     selection.JokerStageId
+                })
+                .ToListAsync();
+
+        var selectionIds = playerSelections
+            .Select(selection => selection.SelectionId)
+            .ToList();
+
+        var selectionHistories =
+            await _context.CompetitionUserCyclistHistories
+                .AsNoTracking()
+                .Where(history =>
+                    selectionIds.Contains(
+                        history.CompetitionUserCyclistId
+                    )
+                )
+                .Select(history => new
+                {
+                    history.CompetitionUserCyclistId,
+                    history.CompetitionCyclistId,
+                    history.FromStageNumber,
+                    history.ToStageNumber
                 })
                 .ToListAsync();
 
@@ -447,33 +466,6 @@ public class CompetitionsController : ControllerBase
                 result => result.Points
             );
 
-        var jerseyPointsByCyclist =
-            new Dictionary<Guid, int>();
-
-        foreach (var stage in publishedStages)
-        {
-            AddPoints(
-                jerseyPointsByCyclist,
-                stage
-                    .YellowJerseyCompetitionCyclistId,
-                YellowJerseyPoints
-            );
-
-            AddPoints(
-                jerseyPointsByCyclist,
-                stage
-                    .GreenJerseyCompetitionCyclistId,
-                GreenJerseyPoints
-            );
-
-            AddPoints(
-                jerseyPointsByCyclist,
-                stage
-                    .PolkaDotJerseyCompetitionCyclistId,
-                PolkaDotJerseyPoints
-            );
-        }
-
         var pointTotals = playerSelections
             .GroupBy(selection =>
                 selection.CompetitionUserId
@@ -482,16 +474,34 @@ public class CompetitionsController : ControllerBase
                 group => group.Key,
                 group => group.Sum(selection =>
                     CalculateSelectionPoints(
+                        selection.SelectionId,
                         selection.CompetitionCyclistId,
                         selection.JokerStageId,
-                        publishedStageIds,
+                        publishedStages
+                            .Select(stage => (
+                                stage.StageId,
+                                stage.StageNumber,
+                                stage.YellowJerseyCompetitionCyclistId,
+                                stage.GreenJerseyCompetitionCyclistId,
+                                stage.PolkaDotJerseyCompetitionCyclistId,
+                                stage.WhiteJerseyCompetitionCyclistId
+                            )),
                         stageResultPointsByCyclistAndStage,
-                        jerseyPointsByCyclist
+                        selectionHistories
+                            .Where(history =>
+                                history.CompetitionUserCyclistId ==
+                                selection.SelectionId
+                            )
+                            .Select(history => (
+                                history.CompetitionCyclistId,
+                                history.FromStageNumber,
+                                history.ToStageNumber
+                            ))
                     )
                 )
             );
 
-        var finalizedAt = DateTime.UtcNow;
+        var finalizedAt = competition.FinishedAt ?? DateTime.UtcNow;
 
         var orderedStandings = competitionUsers
             .Select(competitionUser => new
@@ -524,19 +534,18 @@ public class CompetitionsController : ControllerBase
                 )
                 .ToListAsync();
 
-        if (existingSnapshots.Count > 0)
-        {
-            return BadRequest(
-                "Voor deze wedstrijd bestaat al een definitief eindklassement."
-            );
-        }
-
         await using var transaction =
             await _context.Database
                 .BeginTransactionAsync();
 
         try
         {
+            if (existingSnapshots.Count > 0)
+            {
+                _context.CompetitionFinalStandings
+                    .RemoveRange(existingSnapshots);
+            }
+
             for (
                 var index = 0;
                 index < orderedStandings.Count;
@@ -562,7 +571,12 @@ public class CompetitionsController : ControllerBase
             }
 
             competition.IsFinished = true;
-            competition.FinishedAt = finalizedAt;
+
+            if (!competition.FinishedAt.HasValue)
+            {
+                competition.FinishedAt = finalizedAt;
+            }
+
             competition.IsActive = false;
 
             await _context.SaveChangesAsync();
@@ -588,7 +602,7 @@ public class CompetitionsController : ControllerBase
         return Ok(new
         {
             message =
-                "De wedstrijd is definitief afgerond.",
+                "Het definitieve eindklassement is opgeslagen.",
             competition.Id,
             competition.Name,
             competition.Year,
@@ -732,78 +746,110 @@ public class CompetitionsController : ControllerBase
     }
 
     private static int CalculateSelectionPoints(
-        Guid competitionCyclistId,
+        Guid selectionId,
+        Guid currentCompetitionCyclistId,
         Guid? jokerStageId,
-        IEnumerable<Guid> publishedStageIds,
+        IEnumerable<(
+            Guid StageId,
+            int StageNumber,
+            Guid? YellowJerseyCompetitionCyclistId,
+            Guid? GreenJerseyCompetitionCyclistId,
+            Guid? PolkaDotJerseyCompetitionCyclistId,
+            Guid? WhiteJerseyCompetitionCyclistId
+        )> publishedStages,
         IReadOnlyDictionary<
-            (
-                Guid CompetitionCyclistId,
-                Guid StageId
-            ),
+            (Guid CompetitionCyclistId, Guid StageId),
             int
         > stageResultPointsByCyclistAndStage,
-        IReadOnlyDictionary<Guid, int>
-            jerseyPointsByCyclist
+        IEnumerable<(
+            Guid CompetitionCyclistId,
+            int FromStageNumber,
+            int? ToStageNumber
+        )> histories
     )
     {
-        var stageResultPoints = 0;
-        var jokerPoints = 0;
+        var totalPoints = 0;
+        var historyList = histories.ToList();
 
-        foreach (var stageId in publishedStageIds)
+        foreach (var stage in publishedStages)
         {
-            var points =
+            var history = historyList
+                .FirstOrDefault(item =>
+                    stage.StageNumber >=
+                        item.FromStageNumber &&
+                    (
+                        !item.ToStageNumber.HasValue ||
+                        stage.StageNumber <=
+                            item.ToStageNumber.Value
+                    )
+                );
+
+            if (
+                historyList.Count > 0 &&
+                history.CompetitionCyclistId == Guid.Empty
+            )
+            {
+                continue;
+            }
+
+            var activeCompetitionCyclistId =
+                history.CompetitionCyclistId != Guid.Empty
+                    ? history.CompetitionCyclistId
+                    : currentCompetitionCyclistId;
+
+            var stageResultPoints =
                 stageResultPointsByCyclistAndStage
                     .GetValueOrDefault(
                         (
-                            competitionCyclistId,
-                            stageId
+                            activeCompetitionCyclistId,
+                            stage.StageId
                         )
                     );
 
-            stageResultPoints += points;
+            totalPoints += stageResultPoints;
 
             if (
                 jokerStageId.HasValue &&
-                jokerStageId.Value == stageId
+                jokerStageId.Value == stage.StageId
             )
             {
-                jokerPoints += points;
+                totalPoints += stageResultPoints;
+            }
+
+            if (
+                stage.YellowJerseyCompetitionCyclistId ==
+                activeCompetitionCyclistId
+            )
+            {
+                totalPoints += YellowJerseyPoints;
+            }
+
+            if (
+                stage.GreenJerseyCompetitionCyclistId ==
+                activeCompetitionCyclistId
+            )
+            {
+                totalPoints += GreenJerseyPoints;
+            }
+
+            if (
+                stage.PolkaDotJerseyCompetitionCyclistId ==
+                activeCompetitionCyclistId
+            )
+            {
+                totalPoints += PolkaDotJerseyPoints;
+            }
+
+            if (
+                stage.WhiteJerseyCompetitionCyclistId ==
+                activeCompetitionCyclistId
+            )
+            {
+                totalPoints += WhiteJerseyPoints;
             }
         }
 
-        var jerseyPoints =
-            jerseyPointsByCyclist
-                .GetValueOrDefault(
-                    competitionCyclistId
-                );
-
-        return
-            stageResultPoints +
-            jokerPoints +
-            jerseyPoints;
-    }
-
-    private static void AddPoints(
-        IDictionary<Guid, int> pointsByCyclist,
-        Guid? competitionCyclistId,
-        int points
-    )
-    {
-        if (!competitionCyclistId.HasValue)
-        {
-            return;
-        }
-
-        var cyclistId =
-            competitionCyclistId.Value;
-
-        pointsByCyclist.TryGetValue(
-            cyclistId,
-            out var currentPoints
-        );
-
-        pointsByCyclist[cyclistId] =
-            currentPoints + points;
+        return totalPoints;
     }
 
     private static DateTime GetUtcDateTime(
