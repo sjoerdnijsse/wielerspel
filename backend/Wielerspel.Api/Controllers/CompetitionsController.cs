@@ -612,6 +612,286 @@ public class CompetitionsController : ControllerBase
         });
     }
 
+    // Alleen moderators mogen het definitieve eindklassement van
+    // een reeds afgeronde competitie opnieuw berekenen.
+    [HttpPut("{id:guid}/recalculate-final-standings")]
+    [Authorize(Roles = "Moderator")]
+    public async Task<IActionResult> RecalculateFinalStandings(
+        Guid id
+    )
+    {
+        var competition =
+            await _context.Competitions
+                .FirstOrDefaultAsync(item =>
+                    item.Id == id
+                );
+
+        if (competition == null)
+        {
+            return NotFound(
+                "Wedstrijd niet gevonden."
+            );
+        }
+
+        if (!competition.IsFinished)
+        {
+            return BadRequest(
+                "Deze wedstrijd is nog niet afgerond."
+            );
+        }
+
+        var competitionUsers =
+            await _context.CompetitionUsers
+                .AsNoTracking()
+                .Where(competitionUser =>
+                    competitionUser.CompetitionId == id
+                )
+                .Select(competitionUser => new
+                {
+                    CompetitionUserId = competitionUser.Id,
+                    competitionUser.UserId,
+                    UserName = competitionUser.User.Name
+                })
+                .ToListAsync();
+
+        if (competitionUsers.Count == 0)
+        {
+            return BadRequest(
+                "Het eindklassement kan niet worden berekend omdat er geen deelnemers zijn."
+            );
+        }
+
+        var publishedStages =
+            await _context.Stages
+                .AsNoTracking()
+                .Where(stage =>
+                    stage.CompetitionId == id &&
+                    stage.ResultsPublished
+                )
+                .Select(stage => new
+                {
+                    StageId = stage.Id,
+                    stage.StageNumber,
+                    stage.YellowJerseyCompetitionCyclistId,
+                    stage.GreenJerseyCompetitionCyclistId,
+                    stage.PolkaDotJerseyCompetitionCyclistId,
+                    stage.WhiteJerseyCompetitionCyclistId
+                })
+                .ToListAsync();
+
+        if (publishedStages.Count == 0)
+        {
+            return BadRequest(
+                "Het eindklassement kan niet worden berekend omdat er geen gepubliceerde etappes zijn."
+            );
+        }
+
+        var publishedStageIds =
+            publishedStages
+                .Select(stage => stage.StageId)
+                .ToList();
+
+        var stageResults =
+            await _context.StageResults
+                .AsNoTracking()
+                .Where(stageResult =>
+                    publishedStageIds.Contains(
+                        stageResult.StageId
+                    )
+                )
+                .Select(stageResult => new
+                {
+                    stageResult.StageId,
+                    stageResult.CompetitionCyclistId,
+                    stageResult.Points
+                })
+                .ToListAsync();
+
+        var playerSelections =
+            await _context.CompetitionUserCyclists
+                .AsNoTracking()
+                .Where(selection =>
+                    selection.CompetitionUser
+                        .CompetitionId == id
+                )
+                .Select(selection => new
+                {
+                    SelectionId = selection.Id,
+                    selection.CompetitionUserId,
+                    selection.CompetitionCyclistId,
+                    selection.JokerStageId
+                })
+                .ToListAsync();
+
+        var selectionIds =
+            playerSelections
+                .Select(selection =>
+                    selection.SelectionId
+                )
+                .ToList();
+
+        var selectionHistories =
+            await _context
+                .CompetitionUserCyclistHistories
+                .AsNoTracking()
+                .Where(history =>
+                    selectionIds.Contains(
+                        history.CompetitionUserCyclistId
+                    )
+                )
+                .Select(history => new
+                {
+                    history.CompetitionUserCyclistId,
+                    history.CompetitionCyclistId,
+                    history.FromStageNumber,
+                    history.ToStageNumber
+                })
+                .ToListAsync();
+
+        var stageResultPointsByCyclistAndStage =
+            stageResults.ToDictionary(
+                result => (
+                    result.CompetitionCyclistId,
+                    result.StageId
+                ),
+                result => result.Points
+            );
+
+        var pointTotals =
+            playerSelections
+                .GroupBy(selection =>
+                    selection.CompetitionUserId
+                )
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Sum(selection =>
+                        CalculateSelectionPoints(
+                            selection.SelectionId,
+                            selection.CompetitionCyclistId,
+                            selection.JokerStageId,
+                            publishedStages.Select(stage => (
+                                stage.StageId,
+                                stage.StageNumber,
+                                stage.YellowJerseyCompetitionCyclistId,
+                                stage.GreenJerseyCompetitionCyclistId,
+                                stage.PolkaDotJerseyCompetitionCyclistId,
+                                stage.WhiteJerseyCompetitionCyclistId
+                            )),
+                            stageResultPointsByCyclistAndStage,
+                            selectionHistories
+                                .Where(history =>
+                                    history.CompetitionUserCyclistId ==
+                                    selection.SelectionId
+                                )
+                                .Select(history => (
+                                    history.CompetitionCyclistId,
+                                    history.FromStageNumber,
+                                    history.ToStageNumber
+                                ))
+                        )
+                    )
+                );
+
+        var orderedStandings =
+            competitionUsers
+                .Select(competitionUser => new
+                {
+                    competitionUser.UserId,
+                    competitionUser.UserName,
+                    TotalPoints =
+                        pointTotals.GetValueOrDefault(
+                            competitionUser.CompetitionUserId
+                        )
+                })
+                .OrderByDescending(standing =>
+                    standing.TotalPoints
+                )
+                .ThenBy(standing =>
+                    standing.UserName
+                )
+                .ThenBy(standing =>
+                    standing.UserId
+                )
+                .ToList();
+
+        var existingSnapshots =
+            await _context.CompetitionFinalStandings
+                .Where(finalStanding =>
+                    finalStanding.CompetitionId == id
+                )
+                .ToListAsync();
+
+        var finalizedAt =
+            competition.FinishedAt ?? DateTime.UtcNow;
+
+        await using var transaction =
+            await _context.Database
+                .BeginTransactionAsync();
+
+        try
+        {
+            if (existingSnapshots.Count > 0)
+            {
+                _context.CompetitionFinalStandings
+                    .RemoveRange(existingSnapshots);
+            }
+
+            for (
+                var index = 0;
+                index < orderedStandings.Count;
+                index++
+            )
+            {
+                var standing =
+                    orderedStandings[index];
+
+                _context.CompetitionFinalStandings.Add(
+                    new CompetitionFinalStanding
+                    {
+                        Id = Guid.NewGuid(),
+                        CompetitionId = id,
+                        UserId = standing.UserId,
+                        Position = index + 1,
+                        TotalPoints = standing.TotalPoints,
+                        FinalizedAt = finalizedAt
+                    }
+                );
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
+        var topThree =
+            orderedStandings
+                .Take(3)
+                .Select((standing, index) => new
+                {
+                    position = index + 1,
+                    standing.UserId,
+                    standing.UserName,
+                    standing.TotalPoints
+                })
+                .ToList();
+
+        return Ok(new
+        {
+            message =
+                "Het definitieve eindklassement is opnieuw berekend.",
+            competition.Id,
+            competition.Name,
+            competition.Year,
+            competition.IsFinished,
+            competition.FinishedAt,
+            topThree
+        });
+    }
+
     // Alleen moderators mogen een competitie verwijderen.
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Moderator")]
