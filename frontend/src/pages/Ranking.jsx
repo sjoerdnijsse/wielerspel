@@ -6,6 +6,7 @@ import {
 
 import {
   getCompetitions,
+  getCyclistStandings,
   getPlayerStandingDetails,
   getStandings,
 } from "../services/Api";
@@ -16,6 +17,8 @@ function Ranking() {
   const [competitions, setCompetitions] = useState([]);
   const [competitionId, setCompetitionId] = useState("");
   const [standings, setStandings] = useState([]);
+  const [cyclistStandings, setCyclistStandings] = useState([]);
+  const [view, setView] = useState("players");
 
   const [selectedUserId, setSelectedUserId] =
     useState("");
@@ -44,8 +47,10 @@ function Ranking() {
 
     if (competitionId) {
       loadStandings(competitionId);
+      loadCyclistStandings(competitionId);
     } else {
       setStandings([]);
+      setCyclistStandings([]);
     }
   }, [competitionId]);
 
@@ -59,11 +64,23 @@ function Ranking() {
       setCompetitions(data);
 
       const activeCompetition = data.find(
-        (competition) => competition.isActive
+        (competition) =>
+          competition.isActive &&
+          !competition.isFinished
       );
 
-      if (activeCompetition) {
-        setCompetitionId(activeCompetition.id);
+      const latestFinishedCompetition = data.find(
+        (competition) => competition.isFinished
+      );
+
+      const selectedCompetition =
+        activeCompetition ??
+        latestFinishedCompetition ??
+        data[0] ??
+        null;
+
+      if (selectedCompetition) {
+        setCompetitionId(selectedCompetition.id);
       } else {
         setCompetitionId("");
         setLoading(false);
@@ -103,6 +120,27 @@ function Ranking() {
       setStandings([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadCyclistStandings(
+    selectedCompetitionId
+  ) {
+    try {
+      const data = await getCyclistStandings(
+        selectedCompetitionId
+      );
+
+      setCyclistStandings(data);
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        error.message ||
+          "Het rennersklassement kon niet worden opgehaald."
+      );
+
+      setCyclistStandings([]);
     }
   }
 
@@ -151,6 +189,42 @@ function Ranking() {
     <main className="page-container">
       <h2>Klassement</h2>
 
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          marginBottom: "20px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setView("players")}
+          style={{
+            fontWeight: view === "players" ? "bold" : "normal",
+            borderBottom:
+              view === "players"
+                ? "2px solid currentColor"
+                : "2px solid transparent",
+          }}
+        >
+          Spelers
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setView("cyclists")}
+          style={{
+            fontWeight: view === "cyclists" ? "bold" : "normal",
+            borderBottom:
+              view === "cyclists"
+                ? "2px solid currentColor"
+                : "2px solid transparent",
+          }}
+        >
+          Renners
+        </button>
+      </div>
+
       {error && (
         <p
           style={{
@@ -174,6 +248,7 @@ function Ranking() {
         )}
 
       {!loading &&
+        view === "players" &&
         competitionId &&
         standings.length === 0 &&
         !error && (
@@ -183,7 +258,9 @@ function Ranking() {
           </p>
         )}
 
-      {!loading && standings.length > 0 && (
+      {!loading &&
+        view === "players" &&
+        standings.length > 0 && (
         <div
           style={{
             width: "100%",
@@ -366,6 +443,83 @@ function Ranking() {
           </table>
         </div>
       )}
+
+      {!loading &&
+        view === "cyclists" &&
+        competitionId &&
+        cyclistStandings.length === 0 &&
+        !error && (
+          <p>
+            Er zijn nog geen punten voor renners beschikbaar.
+          </p>
+        )}
+
+      {!loading &&
+        view === "cyclists" &&
+        cyclistStandings.length > 0 && (
+          <div
+            style={{
+              width: "100%",
+              marginTop: "20px",
+              overflowX: "auto",
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "center", padding: "12px 6px", borderBottom: "2px solid #ccc" }}>
+                    Positie
+                  </th>
+                  <th style={{ textAlign: "left", padding: "12px 6px", borderBottom: "2px solid #ccc" }}>
+                    Renner
+                  </th>
+                  <th style={{ textAlign: "left", padding: "12px 6px", borderBottom: "2px solid #ccc" }}>
+                    Ploeg
+                  </th>
+                  <th style={{ textAlign: "right", padding: "12px 6px", borderBottom: "2px solid #ccc", whiteSpace: "nowrap" }}>
+                    Etappepunten
+                  </th>
+                  <th style={{ textAlign: "right", padding: "12px 6px", borderBottom: "2px solid #ccc", whiteSpace: "nowrap" }}>
+                    Truipunten
+                  </th>
+                  <th style={{ textAlign: "right", padding: "12px 6px", borderBottom: "2px solid #ccc" }}>
+                    Totaal
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {cyclistStandings.map((cyclist, index) => (
+                  <tr key={cyclist.competitionCyclistId}>
+                    <td style={{ padding: "12px 6px", textAlign: "center", borderBottom: "1px solid #eee", fontWeight: index < 3 ? "bold" : "normal" }}>
+                      {index + 1}
+                    </td>
+                    <td style={{ padding: "12px 6px", textAlign: "left", borderBottom: "1px solid #eee" }}>
+                      {cyclist.cyclistName}
+                    </td>
+                    <td style={{ padding: "12px 6px", textAlign: "left", borderBottom: "1px solid #eee" }}>
+                      {cyclist.teamName || "-"}
+                    </td>
+                    <td style={{ padding: "12px 6px", textAlign: "right", borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>
+                      {cyclist.stageResultPoints}
+                    </td>
+                    <td style={{ padding: "12px 6px", textAlign: "right", borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>
+                      {cyclist.jerseyPoints}
+                    </td>
+                    <td style={{ padding: "12px 6px", textAlign: "right", borderBottom: "1px solid #eee", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                      {cyclist.totalPoints}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
     </main>
   );
 }

@@ -685,6 +685,26 @@ export async function getStandings(competitionId) {
   return response.json();
 }
 
+export async function getCyclistStandings(competitionId) {
+  const response = await fetch(
+    `${API_URL}/competitions/${competitionId}/standings/cyclists`,
+    {
+      headers: createHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "Rennersklassement ophalen mislukt"
+      )
+    );
+  }
+
+  return response.json();
+}
+
 export async function publishStageResults(
   competitionId,
   stageId

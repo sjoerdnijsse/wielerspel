@@ -231,6 +231,149 @@ public class StandingsController : ControllerBase
         return Ok(standings);
     }
 
+    [HttpGet("cyclists")]
+    public async Task<ActionResult<object>> GetCyclistStandings(
+        Guid competitionId
+    )
+    {
+        var competitionExists =
+            await _context.Competitions
+                .AsNoTracking()
+                .AnyAsync(competition =>
+                    competition.Id == competitionId
+                );
+
+        if (!competitionExists)
+        {
+            return NotFound(
+                "De competitie werd niet gevonden."
+            );
+        }
+
+        var publishedStages =
+            await _context.Stages
+                .AsNoTracking()
+                .Where(stage =>
+                    stage.CompetitionId == competitionId &&
+                    stage.ResultsPublished
+                )
+                .Select(stage => new
+                {
+                    StageId = stage.Id,
+                    stage.YellowJerseyCompetitionCyclistId,
+                    stage.GreenJerseyCompetitionCyclistId,
+                    stage.PolkaDotJerseyCompetitionCyclistId,
+                    stage.WhiteJerseyCompetitionCyclistId
+                })
+                .ToListAsync();
+
+        var publishedStageIds = publishedStages
+            .Select(stage => stage.StageId)
+            .ToList();
+
+        var stageResultPoints =
+            await _context.StageResults
+                .AsNoTracking()
+                .Where(result =>
+                    publishedStageIds.Contains(result.StageId)
+                )
+                .GroupBy(result =>
+                    result.CompetitionCyclistId
+                )
+                .Select(group => new
+                {
+                    CompetitionCyclistId = group.Key,
+                    Points = group.Sum(result => result.Points)
+                })
+                .ToDictionaryAsync(
+                    item => item.CompetitionCyclistId,
+                    item => item.Points
+                );
+
+        var jerseyPoints =
+            new Dictionary<Guid, int>();
+
+        foreach (var stage in publishedStages)
+        {
+            AddPoints(
+                jerseyPoints,
+                stage.YellowJerseyCompetitionCyclistId,
+                YellowJerseyPoints
+            );
+
+            AddPoints(
+                jerseyPoints,
+                stage.GreenJerseyCompetitionCyclistId,
+                GreenJerseyPoints
+            );
+
+            AddPoints(
+                jerseyPoints,
+                stage.PolkaDotJerseyCompetitionCyclistId,
+                PolkaDotJerseyPoints
+            );
+
+            AddPoints(
+                jerseyPoints,
+                stage.WhiteJerseyCompetitionCyclistId,
+                WhiteJerseyPoints
+            );
+        }
+
+        var cyclists =
+            await _context.CompetitionCyclists
+                .AsNoTracking()
+                .Where(competitionCyclist =>
+                    competitionCyclist.CompetitionId ==
+                    competitionId
+                )
+                .Select(competitionCyclist => new
+                {
+                    competitionCyclist.Id,
+                    CyclistName =
+                        competitionCyclist.Cyclist.Name,
+                    TeamName =
+                        competitionCyclist.Cyclist.Team != null
+                            ? competitionCyclist.Cyclist.Team!.Name
+                            : string.Empty
+                })
+                .ToListAsync();
+
+        var standings = cyclists
+            .Select(cyclist =>
+            {
+                var resultPoints =
+                    stageResultPoints.GetValueOrDefault(
+                        cyclist.Id
+                    );
+
+                var cyclistJerseyPoints =
+                    jerseyPoints.GetValueOrDefault(
+                        cyclist.Id
+                    );
+
+                return new
+                {
+                    CompetitionCyclistId = cyclist.Id,
+                    cyclist.CyclistName,
+                    cyclist.TeamName,
+                    StageResultPoints = resultPoints,
+                    JerseyPoints = cyclistJerseyPoints,
+                    TotalPoints =
+                        resultPoints + cyclistJerseyPoints
+                };
+            })
+            .OrderByDescending(cyclist =>
+                cyclist.TotalPoints
+            )
+            .ThenBy(cyclist =>
+                cyclist.CyclistName
+            )
+            .ToList();
+
+        return Ok(standings);
+    }
+
     [HttpGet("{userId:guid}")]
     public async Task<
         ActionResult<PlayerStandingDetailDto>
